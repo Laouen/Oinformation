@@ -23,6 +23,8 @@ import pandas as pd
 
 import torch
 
+import time
+
 
 TD_DTC_GLOBAL_DATA = {
     'covmat': None
@@ -33,7 +35,6 @@ def _save_to_csv(output_path, nplet_tc, nplet_dtc, nplet_o, nplet_s, linparts, p
 
     # if only_synergestic; remove nplets with nplet_o >= 0
     if only_synergestic:
-        print('Removing non synergetic values')
         to_keep = np.where(nplet_o < 0)[0]
         nplet_tc = nplet_tc[to_keep]
         nplet_dtc = nplet_dtc[to_keep]
@@ -134,6 +135,7 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
 
     return nplet_tc, nplet_dtc, nplet_o, nplet_s
 
+
 def _get_covmat(nplet):
     return TD_DTC_GLOBAL_DATA['covmat'][nplet][:,nplet]
 
@@ -171,14 +173,21 @@ def _n_system_partitions(elids, m, n):
             yield list(part)        
 
 
+def get_size(part):
+    return len(part)
+
+
 def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synergestic=False, output_path='./'):
     """    
     data = T samples x N variables matrix    
     
     """
 
+    sart_time = time.time()
+
     # make device cpu if not cuda available or cuda if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Using device:', device)
     
     T, N = np.shape(data)
     n = N if max_n is None else max_n
@@ -191,24 +200,42 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
 
     TD_DTC_GLOBAL_DATA['covmat'] = thiscovmat
 
+    data_ready_time = time.time()
+
+    psize_times = []
+    covmat_times = []
+
     # To compute using pytorch, we need to compute each order separately
     for order in range(min_n, n+1):
 
         linparts_generator = _n_system_partitions(range(N), order, order)
         chunked_linparts_generator = _chunk_generator(linparts_generator, batch_size)
 
-        total_chunks = _f(N,order)//batch_size
+        total_chunks = _f(N, order) // batch_size + 1
         pbar = tqdm(enumerate(chunked_linparts_generator), total=total_chunks)
         for i, chunk_linpart_generator in pbar:
 
             pbar.set_description(f'Processing chunk {i}: computing partitions')
             linparts = [part for part in chunk_linpart_generator]
 
+            if total_chunks > 1 and i < (total_chunks - 1):
+                time_start_psizes = time.time()
+            
             pbar.set_description(f'Processing chunk {i}: computing nplets sizes')
-            psizes = np.array([len(part) for part in linparts])
+            with Pool(cpu_count()) as p:
+                psizes = np.array(p.map(get_size, linparts))
+
+            if total_chunks > 1 and i < (total_chunks - 1):
+                time_betwen_psize_covmat = time.time()
+                psize_times.append(time_betwen_psize_covmat - time_start_psizes)
 
             pbar.set_description(f'Processing chunk {i}: computing sub-covmats')
-            all_covmats = np.array([_get_covmat(part) for part in linparts])
+            with Pool(cpu_count()) as p:
+                all_covmats = np.array(p.map(_get_covmat, linparts))
+            
+            if total_chunks > 1 and i < (total_chunks - 1):
+                time_end = time.time()
+                covmat_times.append(time_end - time_betwen_psize_covmat)
 
             pbar.set_description(f'Processing chunk {i}: computing nplets')
             nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(all_covmats, order, T, device)
@@ -223,6 +250,12 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
             )
 
     TD_DTC_GLOBAL_DATA['covmat'] = None
+
+    # print total elapsed time
+    print('Total time: ', (time.time() - sart_time) / 60, ' minutes')
+    print('Data ready time: ', (data_ready_time - sart_time) / 60, ' minutes')
+    print('psize times mean: ', np.mean(psize_times) / 60, ' minutes')
+    print('covmat times mean: ', np.mean(covmat_times) / 60, ' minutes')
 
     
 def nd_xcorr(data,maxlags):
