@@ -65,34 +65,44 @@ def _save_to_csv(output_path, nplet_tc, nplet_dtc, nplet_o, nplet_s, linparts, p
 
 def data2gaussian(data):
     """
-    INPUT
-    data = T samples x N variables matrix
+    Transform the data into a Gaussian copula and compute the covariance matrix.
     
-    OUTPUT
-    gaussian_data = T samples x N variables matrix with the gaussian copula
-    transformed data
-    covmat = N x N covariance matrix of guassian copula transformed data.
+    Parameters:
+    - data: A 2D numpy array of shape (T, N) where T is the number of samples and N is the number of variables.
+    
+    Returns:
+    - gaussian_data: The data transformed into the Gaussian copula (same shape as the parameter input).
+    - covmat: The covariance matrix of the Gaussian copula transformed data.
     """
+
     T = np.size(data,axis=0)
+    
+     # Step 1 & 2: Rank the data and normalize the ranks
     sortid = np.argsort(data,axis=0) # sorting indices
     copdata = np.argsort(sortid,axis=0) # sorting sorting indices
     copdata = (copdata+1)/(T+1) # normalized indices in the [0,1] range 
+    
+    # Step 3: Apply the inverse CDF of the standard normal distribution
     gaussian_data = sp.special.ndtri(copdata) #uniform data to gaussian
+
+    # Handle infinite values by setting them to 0 (optional and depends on use case)
     gaussian_data[np.isinf(gaussian_data)] = 0
+
+    # Step 4: Compute the covariance matrix
     covmat = gaussian_data.T @ gaussian_data /(T-1) #GC covmat
     
-    return gaussian_data,covmat
+    return gaussian_data, covmat
 
 
-def _gauss_ent_biascorr(N,T):
+def _gaussian_entropy_bias_correction(N,T):
     """Computes the bias of the entropy estimator of a 
     N-dimensional multivariate gaussian with T sample"""
     psiterms = sp.special.psi((T - np.arange(1,N+1))/2)
     return (N*np.log(2/(T-1)) + np.sum(psiterms))/2
 
 
-def _gauss_ent_est(x,y):
-    return 0.5 * torch.log((2 * torch.pi * torch.exp(torch.tensor(1.))).pow(x) * y)
+def _gaussian_entropy_estimation(N,cov_det):
+    return 0.5 * torch.log((2 * torch.pi * torch.exp(torch.tensor(1.))).pow(N) * cov_det)
 
 
 def _all_min_1_ids(N):
@@ -105,21 +115,32 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
 
     batch_covmat = torch.tensor(covmat).to(device)
 
+    batch_size = batch_covmat.shape[0]
+
     # Compute parameters for the batch, this assumes all the batch is from the same order N
     allmin1 = _all_min_1_ids(N)
-    bc1 = _gauss_ent_biascorr(1,T)
-    bcN = _gauss_ent_biascorr(N,T)
-    bcNmin1 = _gauss_ent_biascorr(N-1,T)
+    bc1 = _gaussian_entropy_bias_correction(1,T)
+    bcN = _gaussian_entropy_bias_correction(N,T)
+    bcNmin1 = _gaussian_entropy_bias_correction(N-1,T)
 
+    # |bz|
     batch_detmv = torch.linalg.det(batch_covmat)
-    # TODO: check if the following line is correct, the subindexing may need to consider a : for the batch dimension.
-    # maybe it can be done with torch.einsum or in a single [:,ids,:,ids] or something
-    batch_detmv_min_1 = torch.stack([torch.linalg.det(batch_covmat[:,ids][:,:,ids]) for ids in allmin1]).T
+    # |bz| x |N|
+    submatrices = torch.empty((len(allmin1), batch_size, N-1, N-1), device=batch_covmat.device)
+    for i, ids in enumerate(allmin1):
+        submatrices[i] = batch_covmat[:, ids][:, :, ids]
+    batch_detmv_min_1 = torch.linalg.det(submatrices).T
+    # batch_detmv_min_1 = torch.stack([torch.linalg.det(batch_covmat[:,ids][:,:,ids]) for ids in allmin1]).T
+    # |bz| x |N|
     batch_single_vars = torch.diagonal(batch_covmat, dim1=-2, dim2=-1)
 
-    var_ents = _gauss_ent_est(1.0, batch_single_vars) - bc1
-    sys_ent = _gauss_ent_est(N, batch_detmv) - bcN
-    ent_min_one = _gauss_ent_est(N-1.0, batch_detmv_min_1) - bcNmin1
+    # |bz|
+    sys_ent = _gaussian_entropy_estimation(N, batch_detmv) - bcN
+    # |bz| x |N|
+    ent_min_one = _gaussian_entropy_estimation(N-1.0, batch_detmv_min_1) - bcNmin1
+    # |bz| x |N|
+    var_ents = _gaussian_entropy_estimation(1.0, batch_single_vars) - bc1
+    
 
     nplet_tc = torch.sum(var_ents, dim=1) - sys_ent
     nplet_dtc = torch.sum(ent_min_one, dim=1) - (N-1.0)*sys_ent
@@ -166,7 +187,7 @@ def _n_system_partitions(elids, m, n):
     """
     N = len(elids)
 
-    assert n<=N, "Cant calculate partitions of size larger than the system size (n > len(elids))"
+    assert n <= N, "Cant calculate partitions of size larger than the system size (n > len(elids))"
 
     for p in range(m, n+1):
         for part in combinations(elids, p):
@@ -192,13 +213,11 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
     T, N = np.shape(data)
     n = N if max_n is None else max_n
 
-    assert n<N, "max_n must be lower than len(elids). max_n >= len(elids))"
-    assert min_n<=n, "min_n must be lower or equal than max_n. min_n > max_n"
+    assert n < N, "max_n must be lower than len(elids). max_n >= len(elids))"
+    assert min_n <= n, "min_n must be lower or equal than max_n. min_n > max_n"
 
     # Gaussian Copula of data
-    _, thiscovmat = data2gaussian(data)
-
-    TD_DTC_GLOBAL_DATA['covmat'] = thiscovmat
+    TD_DTC_GLOBAL_DATA['covmat'] = data2gaussian(data)[1]
 
     data_ready_time = time.time()
 
@@ -251,6 +270,7 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
 
     TD_DTC_GLOBAL_DATA['covmat'] = None
 
+<<<<<<< HEAD
     # print total elapsed time
     print('Total time: ', (time.time() - sart_time) / 60, ' minutes')
     print('Data ready time: ', (data_ready_time - sart_time) / 60, ' minutes')
@@ -258,6 +278,10 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
     print('covmat times mean: ', np.mean(covmat_times) / 60, ' minutes')
 
     
+=======
+
+# TODO: check if deprecated and clean all the functions below
+>>>>>>> implemented some improvements
 def nd_xcorr(data,maxlags):
     """    
     data = T samples x N variables matrix. T>N    
