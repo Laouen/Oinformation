@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
 Created on Mon Nov 15 17:06:34 2021
 
@@ -10,31 +11,26 @@ Created on Mon Nov 15 17:06:34 2021
 import os
 
 import scipy as sp
-from scipy import signal
-import scipy.signal as sig
 import numpy as np
-import math
 
 from tqdm.autonotebook import tqdm
-from itertools import combinations, chain, islice
-from multiprocessing import Pool, cpu_count
 
 import pandas as pd
-
 import torch
 
-import time
+from .dataset import LinpartsDataset
+from torch.utils.data import DataLoader
 
 
-TD_DTC_GLOBAL_DATA = {
-    'covmat': None
-}
-
+#TD_DTC_GLOBAL_DATA = {
+#    'covmat': None
+#}
 
 def _save_to_csv(output_path, nplet_tc, nplet_dtc, nplet_o, nplet_s, linparts, psizes, N, only_synergestic=False):
 
     # if only_synergestic; remove nplets with nplet_o >= 0
     if only_synergestic:
+        print('Removing non synergetic values')
         to_keep = np.where(nplet_o < 0)[0]
         nplet_tc = nplet_tc[to_keep]
         nplet_dtc = nplet_dtc[to_keep]
@@ -75,7 +71,7 @@ def data2gaussian(data):
     - covmat: The covariance matrix of the Gaussian copula transformed data.
     """
 
-    T = np.size(data,axis=0)
+    T = np.size(data, axis=0)
     
      # Step 1 & 2: Rank the data and normalize the ranks
     sortid = np.argsort(data,axis=0) # sorting indices
@@ -142,10 +138,14 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
     var_ents = _gaussian_entropy_estimation(1.0, batch_single_vars) - bc1
     
 
+    # |bz|
     nplet_tc = torch.sum(var_ents, dim=1) - sys_ent
+    # |bz|
     nplet_dtc = torch.sum(ent_min_one, dim=1) - (N-1.0)*sys_ent
 
+    # |bz|
     nplet_o = nplet_tc - nplet_dtc
+    # |bz|
     nplet_s = nplet_tc + nplet_dtc
 
     # bring from device and convert to numpy
@@ -157,58 +157,14 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
     return nplet_tc, nplet_dtc, nplet_o, nplet_s
 
 
-def _get_covmat(nplet):
-    return TD_DTC_GLOBAL_DATA['covmat'][nplet][:,nplet]
-
-
-def _f(n:int, r:int):
-    n_fact = np.math.factorial(n)
-    r_fact = np.math.factorial(r)
-    n_r_fact = np.math.factorial(n - r)
-    return int(n_fact / (r_fact * n_r_fact))
-
-
-def _chunk_generator(iterable, size=10):
-    iterator = iter(iterable)
-    for first in iterator:
-        yield chain([first], islice(iterator, size - 1))
-
-
-def _n_system_partitions(elids, m, n):
-    """ Computes all the partitions of a N-element system, where 'elids' are the indexes of the system elements.
-    
-    INPUT
-    elids: Vector with N entries, where each entry is the element id.
-    if op=1, removes 1-element subsets, if =0 does nothing.
-    
-    OUTPUTS
-    linparts: list of partitions, where each list entry is a vector with the elements of the partition. Sorted by ascending sizes of the partitions.
-    psizes: array with the respective sizes of the partitions on linparts. Sorted as linparts.
-    """
-    N = len(elids)
-
-    assert n <= N, "Cant calculate partitions of size larger than the system size (n > len(elids))"
-
-    for p in range(m, n+1):
-        for part in combinations(elids, p):
-            yield list(part)        
-
-
-def get_size(part):
-    return len(part)
-
-
 def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synergestic=False, output_path='./'):
     """    
     data = T samples x N variables matrix    
     
     """
 
-    sart_time = time.time()
-
     # make device cpu if not cuda available or cuda if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print('Using device:', device)
     
     T, N = np.shape(data)
     n = N if max_n is None else max_n
@@ -217,46 +173,33 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
     assert min_n <= n, "min_n must be lower or equal than max_n. min_n > max_n"
 
     # Gaussian Copula of data
-    TD_DTC_GLOBAL_DATA['covmat'] = data2gaussian(data)[1]
-
-    data_ready_time = time.time()
-
-    psize_times = []
-    covmat_times = []
+    #TD_DTC_GLOBAL_DATA['covmat'] = data2gaussian(data)[1]
+    covmat = data2gaussian(data)[1]
 
     # To compute using pytorch, we need to compute each order separately
     for order in range(min_n, n+1):
 
-        linparts_generator = _n_system_partitions(range(N), order, order)
-        chunked_linparts_generator = _chunk_generator(linparts_generator, batch_size)
+        #linparts_generator = _n_system_partitions(range(N), order, order)
+        #chunked_linparts_generator = _chunk_generator(linparts_generator, batch_size)
+        #total_chunks = _f(N,order)//batch_size
 
-        total_chunks = _f(N, order) // batch_size + 1
-        pbar = tqdm(enumerate(chunked_linparts_generator), total=total_chunks)
-        for i, chunk_linpart_generator in pbar:
+        dataset = LinpartsDataset(covmat, N, order)
+        chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
-            pbar.set_description(f'Processing chunk {i}: computing partitions')
-            linparts = [part for part in chunk_linpart_generator]
+        pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size))
+        for i, (linparts, all_covmats, psizes) in pbar:
+        #for i, chunk_linpart_generator in pbar:
 
-            if total_chunks > 1 and i < (total_chunks - 1):
-                time_start_psizes = time.time()
-            
-            pbar.set_description(f'Processing chunk {i}: computing nplets sizes')
-            with Pool(cpu_count()) as p:
-                psizes = np.array(p.map(get_size, linparts))
+            #pbar.set_description(f'Processing chunk {i}: computing partitions')
+            #linparts = [part for part in chunk_linpart_generator]
 
-            if total_chunks > 1 and i < (total_chunks - 1):
-                time_betwen_psize_covmat = time.time()
-                psize_times.append(time_betwen_psize_covmat - time_start_psizes)
+            #pbar.set_description(f'Processing chunk {i}: computing nplets sizes')
+            #psizes = np.array([len(part) for part in linparts])
 
-            pbar.set_description(f'Processing chunk {i}: computing sub-covmats')
-            with Pool(cpu_count()) as p:
-                all_covmats = np.array(p.map(_get_covmat, linparts))
-            
-            if total_chunks > 1 and i < (total_chunks - 1):
-                time_end = time.time()
-                covmat_times.append(time_end - time_betwen_psize_covmat)
+            #pbar.set_description(f'Processing chunk {i}: computing sub-covmats')
+            #all_covmats = np.array([_get_covmat(part) for part in linparts])
 
-            pbar.set_description(f'Processing chunk {i}: computing nplets')
+            pbar.set_description(f'Processing chunk {order} - {i}: computing nplets')
             nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(all_covmats, order, T, device)
 
             pbar.set_description(f'Saving chunk {i}')
@@ -268,100 +211,4 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
                 N, only_synergestic=only_synergestic
             )
 
-    TD_DTC_GLOBAL_DATA['covmat'] = None
-
-<<<<<<< HEAD
-    # print total elapsed time
-    print('Total time: ', (time.time() - sart_time) / 60, ' minutes')
-    print('Data ready time: ', (data_ready_time - sart_time) / 60, ' minutes')
-    print('psize times mean: ', np.mean(psize_times) / 60, ' minutes')
-    print('covmat times mean: ', np.mean(covmat_times) / 60, ' minutes')
-
-    
-=======
-
-# TODO: check if deprecated and clean all the functions below
->>>>>>> implemented some improvements
-def nd_xcorr(data,maxlags):
-    """    
-    data = T samples x N variables matrix. T>N    
-    
-    """    
-    T,N = np.shape(data)
-    lags = signal.correlation_lags(maxlags, maxlags)
-    sel_lags = range(T-maxlags,T+maxlags-1)
-    npairs = int(N*(N-1)/2)
-    pair_list = np.zeros((npairs,2))
-    xcorr = np.zeros((npairs,len(sel_lags)))
-    cont=0
-    for i in range(0,N):
-        for j in range(i+1,N):
-            pair_list[cont,:] = [i,j]
-            x = data[:,i]
-            y = data[:,j]
-            # x = data[:,i] - np.mean(data[:,i])
-            # y = data[:,j] - np.mean(data[:,j])
-            # x = data[:,i]/np.linalg.norm(data[:,i])
-            # y = data[:,j]/np.linalg.norm(data[:,j])
-            # x = stats.zscore(data[:,i])
-            # y = stats.zscore(data[:,j])
-            # x = x/np.linalg.norm(x)
-            # y = y/np.linalg.norm(y)            
-            corr = signal.correlate(x, y)            
-            corr = corr/np.sqrt(np.sum(np.abs(x)**2)*np.sum(np.abs(y)**2))
-    
-            xcorr[cont,:] = corr[sel_lags]
-    
-            cont=cont+1
-    
-    return lags,xcorr,pair_list
-
-
-def hilphase(y1,y2):
-    sig1_hill=sig.hilbert(y1)
-    sig2_hill=sig.hilbert(y2)
-    pdt=(np.inner(sig1_hill,np.conj(sig2_hill))/(np.sqrt(np.inner(sig1_hill,
-               np.conj(sig1_hill))*np.inner(sig2_hill,np.conj(sig2_hill)))))
-    phase = np.angle(pdt)
-
-    return phase
-
-
-def parts_idxs(parts):
-    parts_list = list()
-    for part in parts:
-        parts_list.append(part)
-    return parts_list
-
-
-def random_k_ids(N,k,nints,prob='uni'):
-    """Generates nints random combinations of k elements in a N-sized system    
-    """    
-    if k<5: # brute force for 4 or less subnetworks
-        if math.comb(N,k)<=nints:
-            rand_ints=list(combinations(range(N), k))
-            return rand_ints
-    
-    # Generating probabilites for random sampling of sub-networks ids
-    # See https://ethankoch.medium.com/incredibly-fast-random-sampling-in-python-baf154bd836a
-    
-    if isinstance(prob,str): # prob is string            
-        if prob=='uni':
-            probabilities = np.ones(N)/N # uniform probs of each id 
-            
-        elif prob=='rand':
-            probabilities = np.random.random(N)
-            probabilities /= np.sum(probabilities)
-            
-    else:
-        probabilities = prob # uses user input of probs
-    
-    replicated_probabilities = np.tile(probabilities, (nints, 1))
-    # get random shifting numbers & scale them correctly
-    random_shifts = np.random.random(replicated_probabilities.shape)
-    random_shifts /= random_shifts.sum(axis=1)[:, np.newaxis]
-    # shift by numbers & find largest (by finding the smallest of the negative)
-    shifted_probabilities = random_shifts - replicated_probabilities
-    rand_ints = np.argpartition(shifted_probabilities, k, axis=1)[:, :k]
-    
-    return rand_ints
+    #TD_DTC_GLOBAL_DATA['covmat'] = None
