@@ -122,6 +122,7 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
     # |bz|
     batch_detmv = torch.linalg.det(batch_covmat)
     # |bz| x |N|
+    # TODO: check if this is more efficient than the commented line
     submatrices = torch.empty((len(allmin1), batch_size, N-1, N-1), device=batch_covmat.device)
     for i, ids in enumerate(allmin1):
         submatrices[i] = batch_covmat[:, ids][:, :, ids]
