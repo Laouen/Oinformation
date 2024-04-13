@@ -85,7 +85,7 @@ def data2gaussian(data):
     gaussian_data[np.isinf(gaussian_data)] = 0
 
     # Step 4: Compute the covariance matrix
-    covmat = gaussian_data.T @ gaussian_data /(T-1) #GC covmat
+    covmat = np.cov(gaussian_data.T)
     
     return gaussian_data, covmat
 
@@ -98,7 +98,8 @@ def _gaussian_entropy_bias_correction(N,T):
 
 
 def _gaussian_entropy_estimation(N,cov_det):
-    return 0.5 * torch.log((2 * torch.pi * torch.exp(torch.tensor(1.))).pow(N) * cov_det)
+    with np.errstate(divide = 'ignore'):
+        return 0.5 * torch.log((2 * torch.pi * torch.e).pow(N) * cov_det)
 
 
 def _all_min_1_ids(N):

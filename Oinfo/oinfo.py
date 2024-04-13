@@ -92,7 +92,8 @@ def _gauss_ent_biascorr(N,T):
 
 
 def _gauss_ent_est(x,y):
-    return 0.5*np.log((2*np.pi*np.exp(1))**(x)*y)
+    with np.errstate(divide = 'ignore'):
+        return 0.5*np.log((2*np.pi*np.e)**(x)*y)
 
 
 def _all_min_1_ids(N):
