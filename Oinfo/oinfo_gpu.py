@@ -109,11 +109,12 @@ def _all_min_1_ids(N):
 def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
 
     # covmat is a batch of covariance matrices
-
+    # |bz| x |N| x |N|
     batch_covmat = torch.tensor(covmat).to(device)
 
     batch_size = batch_covmat.shape[0]
 
+    # TODO: this can be precomputed in a matrix of N x 4 and then we can compute n-plets in any order
     # Compute parameters for the batch, this assumes all the batch is from the same order N
     allmin1 = _all_min_1_ids(N)
     bc1 = _gaussian_entropy_bias_correction(1,T)
@@ -123,12 +124,7 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
     # |bz|
     batch_detmv = torch.linalg.det(batch_covmat)
     # |bz| x |N|
-    # TODO: check if this is more efficient than the commented line
-    submatrices = torch.empty((len(allmin1), batch_size, N-1, N-1), device=batch_covmat.device)
-    for i, ids in enumerate(allmin1):
-        submatrices[i] = batch_covmat[:, ids][:, :, ids]
-    batch_detmv_min_1 = torch.linalg.det(submatrices).T
-    # batch_detmv_min_1 = torch.stack([torch.linalg.det(batch_covmat[:,ids][:,:,ids]) for ids in allmin1]).T
+    batch_detmv_min_1 = torch.stack([torch.linalg.det(batch_covmat[:,ids][:,:,ids]) for ids in allmin1]).T
     # |bz| x |N|
     batch_single_vars = torch.diagonal(batch_covmat, dim1=-2, dim2=-1)
 
