@@ -22,10 +22,6 @@ from .dataset import LinpartsDataset
 from torch.utils.data import DataLoader
 
 
-#TD_DTC_GLOBAL_DATA = {
-#    'covmat': None
-#}
-
 def _save_to_csv(output_path, nplet_tc, nplet_dtc, nplet_o, nplet_s, linparts, psizes, N, only_synergestic=False):
 
     # if only_synergestic; remove nplets with nplet_o >= 0
@@ -103,23 +99,18 @@ def _gaussian_entropy_estimation(N,cov_det):
 
 
 def _all_min_1_ids(N):
+    # TODO: maybe using matricial form for all minus 1 I can better paralelize 
+    # the computation of the entropy for all minus one systems.
+    # The following is the matricial mask:
+    # return (np.ones((order, order)) - np.eye(order)).astype(bool)
     return [np.setdiff1d(range(N),x) for x in range(N)]
 
 
-def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
+def _get_tc_dtc_from_batched_covmat(covmat, N, allmin1, bc1, bcN, bcNmin1, device):
 
     # covmat is a batch of covariance matrices
     # |bz| x |N| x |N|
     batch_covmat = torch.tensor(covmat).to(device)
-
-    batch_size = batch_covmat.shape[0]
-
-    # TODO: this can be precomputed in a matrix of N x 4 and then we can compute n-plets in any order
-    # Compute parameters for the batch, this assumes all the batch is from the same order N
-    allmin1 = _all_min_1_ids(N)
-    bc1 = _gaussian_entropy_bias_correction(1,T)
-    bcN = _gaussian_entropy_bias_correction(N,T)
-    bcNmin1 = _gaussian_entropy_bias_correction(N-1,T)
 
     # |bz|
     batch_detmv = torch.linalg.det(batch_covmat)
@@ -134,7 +125,6 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, T, device):
     ent_min_one = _gaussian_entropy_estimation(N-1.0, batch_detmv_min_1) - bcNmin1
     # |bz| x |N|
     var_ents = _gaussian_entropy_estimation(1.0, batch_single_vars) - bc1
-    
 
     # |bz|
     nplet_tc = torch.sum(var_ents, dim=1) - sys_ent
@@ -171,34 +161,28 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
     assert min_n <= n, "min_n must be lower or equal than max_n. min_n > max_n"
 
     # Gaussian Copula of data
-    #TD_DTC_GLOBAL_DATA['covmat'] = data2gaussian(data)[1]
     covmat = data2gaussian(data)[1]
 
     # To compute using pytorch, we need to compute each order separately
     for order in range(min_n, n+1):
 
-        #linparts_generator = _n_system_partitions(range(N), order, order)
-        #chunked_linparts_generator = _chunk_generator(linparts_generator, batch_size)
-        #total_chunks = _f(N,order)//batch_size
+        allmin1 = _all_min_1_ids(order)
+        bc1 = _gaussian_entropy_bias_correction(1,T)
+        bcN = _gaussian_entropy_bias_correction(order,T)
+        bcNmin1 = _gaussian_entropy_bias_correction(order-1,T)
 
         dataset = LinpartsDataset(covmat, N, order)
         chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
         pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size))
         for i, (linparts, all_covmats, psizes) in pbar:
-        #for i, chunk_linpart_generator in pbar:
-
-            #pbar.set_description(f'Processing chunk {i}: computing partitions')
-            #linparts = [part for part in chunk_linpart_generator]
-
-            #pbar.set_description(f'Processing chunk {i}: computing nplets sizes')
-            #psizes = np.array([len(part) for part in linparts])
-
-            #pbar.set_description(f'Processing chunk {i}: computing sub-covmats')
-            #all_covmats = np.array([_get_covmat(part) for part in linparts])
 
             pbar.set_description(f'Processing chunk {order} - {i}: computing nplets')
-            nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(all_covmats, order, T, device)
+            nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
+                all_covmats, order,
+                allmin1, bc1, bcN, bcNmin1,
+                device
+            )
 
             pbar.set_description(f'Saving chunk {i}')
             _save_to_csv(
@@ -208,5 +192,3 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
                 linparts, psizes,
                 N, only_synergestic=only_synergestic
             )
-
-    #TD_DTC_GLOBAL_DATA['covmat'] = None

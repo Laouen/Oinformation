@@ -1,0 +1,11 @@
+{
+	"input_type": "tsv",
+	"input": "/home/laouen.belloli/timeseries.tsv.gz",
+	"metric": "Oinfo",
+	"higher_order": true,
+	"estimator": "gcmi",
+	"modelorder":3,
+	"maxsize":4,
+	"n_best":10,
+	"nboot":100
+}
