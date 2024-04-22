@@ -1,0 +1,12 @@
+[submodule "analysis/libraries/HOI_toolbox"]
+	path = analysis/libraries/HOI_toolbox
+	url = git@github.com:PranavMahajan25/HOI_toolbox.git
+[submodule "analysis/libraries/gcmi"]
+	path = analysis/libraries/gcmi
+	url = git@github.com:robince/gcmi.git
+[submodule "analysis/libraries/jidt"]
+	path = analysis/libraries/jidt
+	url = git@github.com:jlizier/jidt.git
+[submodule "analysis/libraries/NPEET"]
+	path = analysis/libraries/NPEET
+	url = https://github.com/gregversteeg/NPEET.git
