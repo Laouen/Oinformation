@@ -1,19 +1,14 @@
-import numpy as np
 import pandas as pd
+import numpy as np
+import time
 from tqdm import tqdm
 
-import os
-import sys
-import time
 import argparse
 
-HOI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'libraries/HOI_toolbox')  # This gets the directory where main.py is located
-print('HOI Toolbox dir', HOI_dir)
-sys.path.append(HOI_dir)
+from Oinfo import multi_order_meas
 
-from toolbox.Oinfo import exhaustive_loop_zerolag
 
-def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_path):
+def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, batch_size, output_path):
 
     """
         T = number of samples
@@ -26,34 +21,25 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_pat
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
-    config = {
-        "higher_order": True,
-        "estimator": estimator,
-        "n_best": 10, 
-        "nboot": 10
-    }
+
 
     rows = []
     for T in tqdm(range(min_T, max_T+1), leave=False, desc='T'): 
-        for N in tqdm(range(min_N, max_N+1), leave=False, desc='T'):
+        for N in tqdm(range(min_N, max_N+1), leave=False, desc='N'):
 
-            X = np.random.rand(N, T)
+            X = np.random.rand(T, N)
 
             for order in tqdm(range(min_order, max_order+1), leave=False, desc='Order'):
 
-                config['minsize'] = order
-                config['maxsize'] = order
-
                 start = time.time()
-                exhaustive_loop_zerolag(X, config)
+                multi_order_meas(X, order, order, batch_size)
                 delta_t = time.time() - start
 
-                rows.append(['HOI__' + estimator, T, N, order, delta_t])
+                rows.append([estimator, T, N, order, delta_t])
 
-                # Save to disk current data to avoid data lost if script stops
                 pd.DataFrame(
                     rows,
-                    columns=['estimator' ,'T','N','order', 'time']
+                    columns=['estimator', 'T', 'N', 'order', 'time']
                 ).to_csv(output_path, sep='\t', index=False)
 
 
@@ -61,12 +47,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Test run time for HOI O information')
     parser.add_argument('--min_T', type=int, help='Min number of samples')
-    parser.add_argument('--max_T', type=int, help='Max number of samples')
+    parser.add_argument('--max_T', type=int, help='Max number of samples', default=None)
     parser.add_argument('--min_N', type=int, help='Min number of features')
-    parser.add_argument('--max_N', type=int, help='Max number of features')
+    parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
-    parser.add_argument('--max_order', type=int, help='Max size of the n-plets')
-    parser.add_argument('--estimator', type=str, choices=['gcmi', 'lin_est'])
+    parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
+    parser.add_argument('--estimator', type=str, choices=['gc', 'kde'])
+    parser.add_argument('--batch_size', type=int, default=1000000)
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
     args = parser.parse_args()
@@ -75,6 +62,6 @@ if __name__ == '__main__':
         args.min_T, args.max_T,
         args.min_N, args.max_N,
         args.min_order, args.max_order,
-        args.estimator,
+        args.estimator, args.batch_size,
         args.output_path
     )

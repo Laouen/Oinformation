@@ -8,7 +8,7 @@ Created on Mon Nov 15 17:06:34 2021
 @contributor: Laouen Belloli
 """
 
-import os
+from typing import Optional
 
 import scipy as sp
 import numpy as np
@@ -145,7 +145,7 @@ def _get_tc_dtc_from_batched_covmat(covmat, N, allmin1, bc1, bcN, bcNmin1, devic
     return nplet_tc, nplet_dtc, nplet_o, nplet_s
 
 
-def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synergestic=False, output_path='./'):
+def multi_order_meas(data: np.ndarray, min_n: int=2, max_n: Optional[int]=None, batch_size: int=1000000):
     """    
     data = T samples x N variables matrix    
     
@@ -166,16 +166,17 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
     # To compute using pytorch, we need to compute each order separately
     for order in range(min_n, n+1):
 
+        # TODO: ver si puedo cambiar allmin1 por single_exclusion_mask
         allmin1 = _all_min_1_ids(order)
         bc1 = _gaussian_entropy_bias_correction(1,T)
         bcN = _gaussian_entropy_bias_correction(order,T)
         bcNmin1 = _gaussian_entropy_bias_correction(order-1,T)
 
-        dataset = LinpartsDataset(covmat, N, order)
+        dataset = LinpartsDataset(covmat, order)
         chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
         pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size))
-        for i, (linparts, all_covmats, psizes) in pbar:
+        for i, (linparts, psizes, all_covmats) in pbar:
 
             pbar.set_description(f'Processing chunk {order} - {i}: computing nplets')
             nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
@@ -184,11 +185,28 @@ def multi_order_meas(data, min_n=2, max_n=None, batch_size=1000000, only_synerge
                 device
             )
 
-            pbar.set_description(f'Saving chunk {i}')
-            _save_to_csv(
-                os.path.join(output_path, f'nplets_{order}_{i}.csv'),
-                nplets_tc, nplets_dtc,
-                nplets_o, nplets_s,
-                linparts, psizes,
-                N, only_synergestic=only_synergestic
-            )
+            return {
+                'linparts': linparts,
+                'psizes': psizes,
+                'nplets_tc': nplets_tc,
+                'nplets_dtc': nplets_dtc,
+                'nplets_o': nplets_o,
+                'nplets_s': nplets_s
+            }
+
+'''
+
+util function to save to csv
+
+only_synergestic=False
+output_path='./'
+
+pbar.set_description(f'Saving chunk {i}')
+_save_to_csv(
+    os.path.join(output_path, f'nplets_{order}_{i}.csv'),
+    nplets_tc, nplets_dtc,
+    nplets_o, nplets_s,
+    linparts, psizes,
+    N, only_synergestic=only_synergestic
+)
+'''

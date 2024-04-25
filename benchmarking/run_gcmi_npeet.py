@@ -8,7 +8,15 @@ from tqdm import tqdm
 import argparse
 
 from npeet import entropy_estimators as ee
-from .libraries.gcmi.python import gcmi
+
+import os
+import sys
+
+GCMI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'libraries')  # This gets the directory where main.py is located
+print('GCMI dir', GCMI_dir)
+sys.path.append(GCMI_dir)
+
+from gcmi.python import gcmi
 
 class systemPartsDataset:
     def __init__(self, X, order):
@@ -34,10 +42,7 @@ class systemPartsDataset:
         Iterate over all combinations of features in the dataset.
 
         Yields:
-            tuple: A tuple containing:
-                - part (tuple): The indices of the features in the current combination.
-                - len_part (int): The number of features in the current combination (always equal to 'order').
-                - X_part (np.ndarray): The subset of the data matrix corresponding to the current combination, shape (T, order).
+            X_part (np.ndarray): The subset of the data matrix corresponding to the current combination, shape (T, order).
         """
         for part in self.linparts_generator:
             yield self.X[:,part]
@@ -119,12 +124,12 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_pat
                 order_o_information(X, order, o_estimator)
                 delta_t = time.time() - start
 
-                rows.append([T, N, order, delta_t])
+                rows.append([estimator, T, N, order, delta_t])
 
-    pd.DataFrame(
-        rows,
-        columns=[estimator, 'T', 'N', 'order', 'time']
-    ).to_csv(output_path, sep='\t', index=False)
+                pd.DataFrame(
+                    rows,
+                    columns=['estimator', 'T', 'N', 'order', 'time']
+                ).to_csv(output_path, sep='\t', index=False)
 
 
 if __name__ == '__main__':
@@ -136,8 +141,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
-    parser.add_argument('--estimator', type='str', choices=['gcmi', 'npeet'])
-    parser.add_argument('-output_path', '--o', type=str, help='Path of the .tsv file where to store the results')
+    parser.add_argument('--estimator', type=str, choices=['gcmi', 'npeet'])
+    parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
     args = parser.parse_args()
 
