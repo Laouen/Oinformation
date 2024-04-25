@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
-import time
-from toolbox.Oinfo import exhaustive_loop_zerolag
-import argparse
+from tqdm import tqdm
+from .libraries.HOI_toolbox.toolbox.Oinfo import exhaustive_loop_zerolag
 
+import time
+import argparse
 
 def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_path):
 
@@ -22,25 +23,25 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_pat
     }
 
     rows = []
-    for T in range(min_T, max_T+1): 
-        for N in range(min_N, max_N+1):
+    for T in tqdm(range(min_T, max_T+1), leave=False, desc='T'): 
+        for N in tqdm(range(min_N, max_N+1), leave=False, desc='T'):
 
             X = np.random.rand(N, T)
 
-            for order in range(min_order, max_order+1):
+            for order in tqdm(range(min_order, max_order+1), leave=False, desc='Order'):
 
                 config['minsize'] = order
                 config['maxsize'] = order
 
                 start = time.time()
-                Odict = exhaustive_loop_zerolag(X, config)
+                exhaustive_loop_zerolag(X, config)
                 delta_t = time.time() - start
 
                 rows.append([T, N, order, delta_t])
 
     pd.DataFrame(
         rows,
-        columns=['T','N','order', 'time']
+        columns=['HOI__' + estimator ,'T','N','order', 'time']
     ).to_csv(output_path, sep='\t', index=False)
 
 
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_N', type=int, help='Max number of features')
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets')
-    parser.add_argument('--estimator', type='str', choices=['gcim', 'lin_est'])
+    parser.add_argument('--estimator', type='str', choices=['gcmi', 'lin_est'])
     parser.add_argument('-output_path', '--o', type=str, help='Path of the .tsv file where to store the results')
 
     args = parser.parse_args()
