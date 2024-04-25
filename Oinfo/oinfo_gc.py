@@ -94,8 +94,12 @@ def _gaussian_entropy_bias_correction(N,T):
 
 
 def _gaussian_entropy_estimation(N,cov_det):
+
+    print('N', N)
+    print('cov_det.shape', cov_det.shape)
+
     with np.errstate(divide = 'ignore'):
-        return 0.5 * torch.log((2 * torch.pi * torch.e).pow(N) * cov_det)
+        return 0.5 * torch.log(torch.tensor(2 * torch.pi * torch.e).pow(N) * cov_det)
 
 
 def _all_min_1_ids(N):

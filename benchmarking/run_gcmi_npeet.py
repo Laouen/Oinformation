@@ -66,6 +66,8 @@ def o_information(X: np.ndarray, single_exclusions_mask: np.ndarray, entropy_fun
     individual_entropies = sum(entropy_func(X[:,[idx]]) for idx in range(N))
     conditional_entropies = sum(entropy_func(X[:,idxs]) for idxs in single_exclusions_mask)
 
+    # TODO: mirar esta formula y las anteriores porque deveria sumarle element-wise los individual entropies con los conditional entropies
+    # Los condicional no son condicional tampoco, es un mal nombre
     return (N - 2) * joint_entropy + individual_entropies - conditional_entropies
 
 

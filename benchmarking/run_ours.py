@@ -35,7 +35,7 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, batch_size
                 multi_order_meas(X, order, order, batch_size)
                 delta_t = time.time() - start
 
-                rows.append([estimator, T, N, order, delta_t])
+                rows.append(['ours_' + estimator, T, N, order, delta_t])
 
                 pd.DataFrame(
                     rows,
