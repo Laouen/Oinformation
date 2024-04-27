@@ -1,138 +1,156 @@
 from typing import Optional
-import numpy as np
+from tqdm import tqdm
 
+import numpy as np
 import torch
 
-from Oinfo.dataset import LinpartsDataset
+from Oinfo.dataset import KNearestNeighborDataset
+from torch.utils.data import DataLoader
 
 
-def entropy_torch(x, k=3, base=2):
-    """
-    PyTorch-based k-nearest neighbor entropy estimator that computes entropy for each batch element independently.
-    `x` should be a tensor of shape (batch_size, n_samples, n_features) = (BS, T, N).
-    `k` is the number of nearest neighbors to consider.
-    """
+def distances(X: np.ndarray):
+
+    # X = (batch_size, n_samples, n_variables)
+
+    # (batch_size, n_samples, n_samples, n_variables)
+    return torch.norm(X.unsqueeze(2) - X.unsqueeze(1), dim=3, p=2)  
+
+
+def entropy(X: torch.Tensor, k: int=1, base: int=2):
+
+    # X[:, i, j, k] = sample_{i,k} - sample_{j,k} for each batch element (avoided for simplicity)
+
+    # X = (batch_size, n_samples, n_samples, n_variables)
+    _, n_samples, _, n_variables = X.shape
     
-    assert k < x.shape[1], f"Set k smaller than n_samples. {k} >= {x.shape[1]}."
+    # (batch_size, n_samples, n_samples)
+    X_distances = torch.linalg.vector_norm(X, ord=2, dim=3)
 
-    x = x + 1e-10 * torch.rand_like(x)  # Adding small noise to break ties
-    batch_size, n_samples, n_features = x.shape
+    # (batch_size, n_samples, n_samples)
+    X_distances = torch.sort(X_distances, descending=False, dim=2)
+
+    # (batch_size, n_samples, )
+    knn_distances = X_distances[:, :, k+1]
+
+    # TODO: check if is inportant to convert n_samples and k to tensors or if n_variables should be a tensor as well
+    # TODO: export torch.log(torch.tensor(2.0)) as a constant
+    const = (
+        torch.digamma(torch.tensor(n_samples, dtype=torch.float32)) -
+        torch.digamma(torch.tensor(k, dtype=torch.float32)) + 
+        n_variables * torch.log(torch.tensor(2.0))
+    )
     
-    # Compute pairwise distances
-    x = x.unsqueeze(2)  # shape: (batch_size, n_samples, 1, n_features)
-    distances = torch.norm(x - x.transpose(1, 2), dim=3, p=2)  # shape: (batch_size, n_samples, n_samples)
-
-    # Get the k-nearest neighbors distances
-    knn_distances, _ = torch.topk(distances, k+1, largest=False, dim=2)
-    knn_distances = knn_distances[:, :, k+1]  # get only the k-th distances for each element shape: (batch_size, n_samples)
-
-    # Compute entropy
-    const = torch.digamma(torch.tensor(n_samples, dtype=torch.float32)) - torch.digamma(torch.tensor(k, dtype=torch.float32)) + n_features * torch.log(torch.tensor(2.0))
-    entropy_values = (const + n_features * torch.log(knn_distances.mean(dim=1))) / torch.log(torch.tensor(base))
-
     # (batch_size, )
-    return entropy_values  # Return entropy for each batch element
+    return (const + n_variables * torch.log(knn_distances.mean(dim=1))) / torch.log(torch.tensor(base))
 
 
-def total_entropy(X):
+def single_entropies(X: torch.Tensor):
 
-    batch_size, n_features, n_samples = X.shape
+    # X[:, i, j, k] = sample_{i,k} - sample_{j,k} for each batch element (avoided for simplicity)
 
-    # (batch_size, n_features, n_samples, 1)
-    X_reshaped = X.permute(0, 2, 1).unsqueeze(-1)
+    # X = (batch_size, n_samples, n_samples, n_variables)
+    batch_size, n_samples, _, n_variables = X.shape
 
-    # (batch_size * n_features, n_samples, 1)
-    X_flattened = X_reshaped.reshape(batch_size * n_features, n_samples, 1)
+    # (batch_size, n_variables, n_samples, n_samples, 1)
+    X_permuted = X.permute(0, 3, 1, 2).unsqueeze(-1)
 
-    # (batch_size * n_features,)
-    entropies = entropy_torch(X_flattened)
+    # (batch_size * n_variables, n_samples, n_samples, 1)
+    X_reshaped = X_permuted.reshape(batch_size * n_variables, n_samples, n_samples, 1)
 
-    # (batch_size, n_features)
-    return entropies.view(batch_size, n_features)
+    # (batch_size * n_variables,)
+    entropies = entropy(X_reshaped)
+
+    # (batch_size, n_variables)
+    return entropies.view(batch_size, n_variables)
 
 
-def conditional_entropy_torch(X):
+def single_exclusion_entropies(X: torch.Tensor):
 
-    N = X.shape[1]
+    # X[:, i, j, k] = sample_{i,k} - sample_{j,k} for each batch element (avoided for simplicity)
 
-    single_exclusions_mask = (np.ones((N, N)) - np.eye(N)).astype(bool)
+    # X = (batch_size, n_samples, n_samples, n_variables)
+    n_variables = X.shape[3]
+
+    # (n_variables, n_variables)
+    masks = torch.ones((n_variables, n_variables), dtype=bool)
+    masks[torch.arange(n_variables), torch.arange(n_variables)] = False
+ 
+    # NOTE: The stacked loop could be improuved using advanced indexing to 
+    # transform the X to shape (batch_size * n_variables, n_samples, n_sample, n_variables-1)
+    # then compute the entropy in a single pass and then reshape to get (batch_size, n_features).
+    # 
+    # The drawback with that is that is much more memory consuming and not sure its a good optimization
+    # and for sure is not that good if not run in GPU. Maybe is a good optimization to do to use
+    # in GPU with a big RAM and select the metod on runtime depending on where is run
 
     # (batch_size, n_features)
     return torch.stack([
-        entropy_torch(X[:, :, idxs])
-        for idxs in single_exclusions_mask
+        entropy(X[:, :, :, mask])
+        for mask in masks
     ], dim=1)
 
 
-def o_information(X: np.ndarray):
+def o_information(X: torch.Tensor):
     """
     Calculate the O-information for a given dataset.
 
     Args:
-        X (np.ndarray): A batched 2D array representing multivariate features (batch_size, T samples x order features).
-        single_exclusions_mask (np.ndarray): A boolean mask 2D array to exclude one variable at a time (order x order).
-        entropy_func (callable): Function to compute entropy of the dataset.
+        X (torch.Tensor): A batched 3D array representing the pairwise variabled
+        difference. With shape (batch_size, n_samples, n_samples, n_variables).
+        X[*, i, j, k] = sample_{i,k} - sample_{j,k}
 
     Returns:
-        float: Computed O-information for the dataset.
+        torch.Tensor: Computed O-information for all the batch.
     """
 
-    N = X.shape[1]
+    # 
+
+    n_variables = X.shape[3]
 
     # (batch_size, )
-    joint_entropy = entropy_torch(X)
+    joint_entropy = entropy(X)
     
     # (batch_size, n_features)
-    individual_entropies = total_entropy(X)
+    all_single_entropies = single_entropies(X)
 
     # (batch_size, n_features)
-    conditional_entropies = conditional_entropy_torch(X)
+    all_single_exclusion_entropies = single_exclusion_entropies(X)
 
     # (batch_size, )
-    return (N - 2) * joint_entropy + (individual_entropies - conditional_entropies).sum(dim=1)
+    return (n_variables - 2) * joint_entropy + (all_single_entropies - all_single_exclusion_entropies).sum(dim=1)
 
 
-def multi_order_meas(data: np.ndarray, min_n: int=2, max_n: Optional[int]=None, batch_size: int=1000000):
+def multi_order_meas(X: np.ndarray, min_n: int=2, max_n: Optional[int]=None, batch_size: int=1000000):
     """    
-    data = T samples x N variables matrix    
+    X (np.ndarray): The system data as a 2D array with shape (n_samples, n_variables)    
     
     """
 
     # make device cpu if not cuda available or cuda if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    T, N = np.shape(data)
+    T, N = np.shape(X)
     n = N if max_n is None else max_n
 
     assert n < N, "max_n must be lower than len(elids). max_n >= len(elids))"
     assert min_n <= n, "min_n must be lower or equal than max_n. min_n > max_n"
 
-
-    # Ver si puedo precacular la matriz de distancias y subindexar eso como lo hacemos
-    # con la matriz de covarianzas covmat para optimizar. Esto es como definir la topologia entera
-    # y uego calcular sobre ella
+    X_distances = distances(X)
     
     # To compute using pytorch, we need to compute each order separately
     for order in range(min_n, n+1):
 
-        dataset = LinpartsDataset(covmat, order)
-        chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
+        dataset = KNearestNeighborDataset(X_distances, order)
+        dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
-        pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size))
-        for i, (linparts, psizes, all_covmats) in pbar:
+        for (partition_idxs, sub_distances) in tqdm(dataloader, total=(len(dataset) // batch_size)):
 
-            pbar.set_description(f'Processing chunk {order} - {i}: computing nplets')
-            nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
-                all_covmats, order,
-                allmin1, bc1, bcN, bcNmin1,
-                device
-            )
+            sub_distances.to(device)
+
+            o_info = o_information(sub_distances)
 
             return {
-                'linparts': linparts,
-                'psizes': psizes,
-                'nplets_tc': nplets_tc,
-                'nplets_dtc': nplets_dtc,
-                'nplets_o': nplets_o,
-                'nplets_s': nplets_s
+                'partition_idxs': partition_idxs,
+                'order': order,
+                'o_info': o_info.cpu().numpy()
             }

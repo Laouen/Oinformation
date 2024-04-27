@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-Created on Mon Nov 15 17:06:34 2021
-
-@author: Ruben Herzog
-@contributor: Laouen Belloli
-"""
-
 from typing import Optional
 
 import scipy as sp
@@ -18,7 +8,7 @@ from tqdm.autonotebook import tqdm
 import pandas as pd
 import torch
 
-from .dataset import LinpartsDataset
+from .dataset import CovarianceDataset
 from torch.utils.data import DataLoader
 
 
@@ -93,58 +83,46 @@ def _gaussian_entropy_bias_correction(N,T):
     return (N*np.log(2/(T-1)) + np.sum(psiterms))/2
 
 
-def _gaussian_entropy_estimation(N,cov_det):
+def _gaussian_entropy_estimation(cov_det):
 
-    print('N', N)
-    print('cov_det.shape', cov_det.shape)
-
+    n_variables = cov_det.shape[2]
+    
     with np.errstate(divide = 'ignore'):
-        return 0.5 * torch.log(torch.tensor(2 * torch.pi * torch.e).pow(N) * cov_det)
+        return 0.5 * torch.log(torch.tensor(2 * torch.pi * torch.e).pow(n_variables) * cov_det)
 
 
-def _all_min_1_ids(N):
-    # TODO: maybe using matricial form for all minus 1 I can better paralelize 
-    # the computation of the entropy for all minus one systems.
-    # The following is the matricial mask:
-    # return (np.ones((order, order)) - np.eye(order)).astype(bool)
-    return [np.setdiff1d(range(N),x) for x in range(N)]
+def _all_min_1_ids(n_variables):
+    return [np.setdiff1d(range(n_variables),x) for x in range(n_variables)]
 
 
-def _get_tc_dtc_from_batched_covmat(covmat, N, allmin1, bc1, bcN, bcNmin1, device):
+def _get_tc_dtc_from_batched_covmat(covmat: torch.Tensor, n_variables: int, allmin1, bc1: float, bcN: float, bcNmin1: float):
 
     # covmat is a batch of covariance matrices
     # |bz| x |N| x |N|
-    batch_covmat = torch.tensor(covmat).to(device)
 
     # |bz|
-    batch_detmv = torch.linalg.det(batch_covmat)
+    batch_det = torch.linalg.det(covmat)
     # |bz| x |N|
-    batch_detmv_min_1 = torch.stack([torch.linalg.det(batch_covmat[:,ids][:,:,ids]) for ids in allmin1]).T
+    single_var_dets = torch.diagonal(covmat, dim1=-2, dim2=-1)
     # |bz| x |N|
-    batch_single_vars = torch.diagonal(batch_covmat, dim1=-2, dim2=-1)
+    single_exclusion_dets = torch.stack([torch.linalg.det(covmat[:,ids][:,:,ids]) for ids in allmin1]).T
 
     # |bz|
-    sys_ent = _gaussian_entropy_estimation(N, batch_detmv) - bcN
+    sys_ent = _gaussian_entropy_estimation(batch_det) - bcN
     # |bz| x |N|
-    ent_min_one = _gaussian_entropy_estimation(N-1.0, batch_detmv_min_1) - bcNmin1
+    ent_min_one = _gaussian_entropy_estimation(single_exclusion_dets) - bcNmin1
     # |bz| x |N|
-    var_ents = _gaussian_entropy_estimation(1.0, batch_single_vars) - bc1
+    var_ents = _gaussian_entropy_estimation(single_var_dets) - bc1
 
     # |bz|
     nplet_tc = torch.sum(var_ents, dim=1) - sys_ent
     # |bz|
-    nplet_dtc = torch.sum(ent_min_one, dim=1) - (N-1.0)*sys_ent
+    nplet_dtc = torch.sum(ent_min_one, dim=1) - (n_variables-1.0)*sys_ent
 
     # |bz|
     nplet_o = nplet_tc - nplet_dtc
     # |bz|
     nplet_s = nplet_tc + nplet_dtc
-
-    # bring from device and convert to numpy
-    nplet_tc = nplet_tc.cpu().numpy()
-    nplet_dtc = nplet_dtc.cpu().numpy()
-    nplet_o = nplet_o.cpu().numpy()
-    nplet_s = nplet_s.cpu().numpy()
 
     return nplet_tc, nplet_dtc, nplet_o, nplet_s
 
@@ -176,26 +154,27 @@ def multi_order_meas(data: np.ndarray, min_n: int=2, max_n: Optional[int]=None, 
         bcN = _gaussian_entropy_bias_correction(order,T)
         bcNmin1 = _gaussian_entropy_bias_correction(order-1,T)
 
-        dataset = LinpartsDataset(covmat, order)
+        dataset = CovarianceDataset(covmat, order)
         chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
         pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size))
-        for i, (linparts, psizes, all_covmats) in pbar:
+        for i, (partition_idxs, partition_covmat) in pbar:
+
+            partition_covmat.to(device)
 
             pbar.set_description(f'Processing chunk {order} - {i}: computing nplets')
             nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
-                all_covmats, order,
-                allmin1, bc1, bcN, bcNmin1,
-                device
+                partition_covmat, order,
+                allmin1, bc1, bcN, bcNmin1
             )
 
             return {
-                'linparts': linparts,
-                'psizes': psizes,
-                'nplets_tc': nplets_tc,
-                'nplets_dtc': nplets_dtc,
-                'nplets_o': nplets_o,
-                'nplets_s': nplets_s
+                'partition_idxs': partition_idxs,
+                'order': order,
+                'nplets_tc': nplets_tc.cpu().numpy(),
+                'nplets_dtc': nplets_dtc.cpu().numpy(),
+                'nplets_o': nplets_o.cpu().numpy(),
+                'nplets_s': nplets_s.cpu().numpy()
             }
 
 '''
