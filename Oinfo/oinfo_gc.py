@@ -144,8 +144,17 @@ def nplet_tc_dtc(X: np.ndarray):
     bcN = _gaussian_entropy_bias_correction(N,T)
     bcNmin1 = _gaussian_entropy_bias_correction(N-1,T)
 
-    return _get_tc_dtc_from_batched_covmat(
+    nplet_tc, nplet_dtc, nplet_o, nplet_s = _get_tc_dtc_from_batched_covmat(
         covmat, allmin1, bc1, bcN, bcNmin1
+    )
+
+    print (nplet_tc, nplet_dtc, nplet_o, nplet_s)
+
+    return (
+        nplet_tc.cpu().numpy()[0],
+        nplet_dtc.cpu().numpy()[0],
+        nplet_o.cpu().numpy()[0],
+        nplet_s.cpu().numpy()[0]
     )
 
     
