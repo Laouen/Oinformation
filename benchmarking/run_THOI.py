@@ -5,8 +5,12 @@ from tqdm import tqdm
 
 import argparse
 
-from Oinfo import multi_order_meas
+from Oinfo import multi_order_meas_gc, multi_order_meas_knn
 
+ESTIMATORS = {
+    'gc': multi_order_meas_gc,
+    'knn': multi_order_meas_knn
+}
 
 def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, batch_size, output_path):
 
@@ -21,6 +25,8 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, batch_size
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
+
+    multi_order_meas = ESTIMATORS[estimator]
 
 
     rows = []
@@ -52,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
-    parser.add_argument('--estimator', type=str, choices=['gc', 'kde'])
+    parser.add_argument('--estimator', type=str, choices=['gc', 'knn'])
     parser.add_argument('--batch_size', type=int, default=1000000)
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 

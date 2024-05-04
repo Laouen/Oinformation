@@ -8,15 +8,15 @@ from Oinfo.dataset import KNearestNeighborDataset
 from torch.utils.data import DataLoader
 
 
-def distances(X: np.ndarray):
+def pairwise_var_diffs(X: np.ndarray):
 
-    # X = (batch_size, n_samples, n_variables)
+    # X = (n_samples, n_variables)
 
-    # (batch_size, n_samples, n_samples, n_variables)
-    return torch.norm(X.unsqueeze(2) - X.unsqueeze(1), dim=3, p=2)  
+    # (n_samples, n_samples, n_variables)
+    return np.expand_dims(X, axis=1) - np.expand_dims(X, axis=0)  
 
 
-def entropy(X: torch.Tensor, k: int=1, base: int=2):
+def entropy(X: torch.Tensor, k: int=3, base: int=2):
 
     # X[:, i, j, k] = sample_{i,k} - sample_{j,k} for each batch element (avoided for simplicity)
 
@@ -27,7 +27,7 @@ def entropy(X: torch.Tensor, k: int=1, base: int=2):
     X_distances = torch.linalg.vector_norm(X, ord=2, dim=3)
 
     # (batch_size, n_samples, n_samples)
-    X_distances = torch.sort(X_distances, descending=False, dim=2)
+    X_distances, _ = torch.sort(X_distances, descending=False, dim=2)
 
     # (batch_size, n_samples, )
     knn_distances = X_distances[:, :, k+1]
@@ -51,11 +51,18 @@ def single_entropies(X: torch.Tensor):
     # X = (batch_size, n_samples, n_samples, n_variables)
     batch_size, n_samples, _, n_variables = X.shape
 
-    # (batch_size, n_variables, n_samples, n_samples, 1)
-    X_permuted = X.permute(0, 3, 1, 2).unsqueeze(-1)
+    tqdm.write('X.shape' + str(X.shape))
+
+    # (batch_size, n_variables, n_samples, n_samples)
+    X_permuted = X.permute(0, 3, 1, 2)
+
+    tqdm.write('X_permuted.shape' + str(X_permuted.shape))
+
+    # (batch_size * n_variables, n_samples, n_samples)
+    X_reshaped = X_permuted.reshape(batch_size * n_variables, n_samples, n_samples)
 
     # (batch_size * n_variables, n_samples, n_samples, 1)
-    X_reshaped = X_permuted.reshape(batch_size * n_variables, n_samples, n_samples, 1)
+    X_reshaped = X_reshaped.unsqueeze(-1)
 
     # (batch_size * n_variables,)
     entropies = entropy(X_reshaped)
@@ -107,6 +114,9 @@ def o_information(X: torch.Tensor):
 
     n_variables = X.shape[3]
 
+    # TODO: The single variable entropies are always the same.
+    # This could be calculated once at the begining and then accessed here.
+
     # (batch_size, )
     joint_entropy = entropy(X)
     
@@ -120,7 +130,7 @@ def o_information(X: torch.Tensor):
     return (n_variables - 2) * joint_entropy + (all_single_entropies - all_single_exclusion_entropies).sum(dim=1)
 
 
-def multi_order_meas(X: np.ndarray, min_n: int=2, max_n: Optional[int]=None, batch_size: int=1000000):
+def multi_order_meas_knn(X: np.ndarray, min_n: int=2, max_n: Optional[int]=None, batch_size: int=1000000):
     """    
     X (np.ndarray): The system data as a 2D array with shape (n_samples, n_variables)    
     
@@ -135,12 +145,12 @@ def multi_order_meas(X: np.ndarray, min_n: int=2, max_n: Optional[int]=None, bat
     assert n < N, "max_n must be lower than len(elids). max_n >= len(elids))"
     assert min_n <= n, "min_n must be lower or equal than max_n. min_n > max_n"
 
-    X_distances = distances(X)
-    
+    X_diffs = pairwise_var_diffs(X)
+
     # To compute using pytorch, we need to compute each order separately
     for order in range(min_n, n+1):
 
-        dataset = KNearestNeighborDataset(X_distances, order)
+        dataset = KNearestNeighborDataset(X_diffs, N, order)
         dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
         for (partition_idxs, sub_distances) in tqdm(dataloader, total=(len(dataset) // batch_size)):
