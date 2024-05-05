@@ -107,7 +107,7 @@ def _get_tc_dtc_from_batched_covmat(covmat: torch.Tensor, allmin1, bc1: float, b
     # |bz| x |N|
     single_var_dets = torch.diagonal(covmat, dim1=-2, dim2=-1)
     # |bz| x |N|
-    single_exclusion_dets = torch.stack([torch.linalg.det(covmat[:,ids][:,:,ids]) for ids in allmin1]).T
+    single_exclusion_dets = torch.stack([torch.linalg.det(covmat[:,ids][:,:,ids]) for ids in allmin1], dim=1)
 
     # |bz|
     sys_ent = _gaussian_entropy_estimation(batch_det, n_variables) - bcN
@@ -120,6 +120,7 @@ def _get_tc_dtc_from_batched_covmat(covmat: torch.Tensor, allmin1, bc1: float, b
 
     # |bz|
     nplet_tc = torch.sum(var_ents, dim=1) - sys_ent
+    # TODO: -inf - inf return NaN in pytorch. Check how should I handle this.
     # |bz|
     nplet_dtc = torch.sum(ent_min_one, dim=1) - (n_variables-1.0)*sys_ent
 
@@ -129,6 +130,7 @@ def _get_tc_dtc_from_batched_covmat(covmat: torch.Tensor, allmin1, bc1: float, b
     nplet_s = nplet_tc + nplet_dtc
 
     return nplet_tc, nplet_dtc, nplet_o, nplet_s
+
 
 def nplet_tc_dtc(X: np.ndarray):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -148,8 +150,6 @@ def nplet_tc_dtc(X: np.ndarray):
         covmat, allmin1, bc1, bcN, bcNmin1
     )
 
-    print (nplet_tc, nplet_dtc, nplet_o, nplet_s)
-
     return (
         nplet_tc.cpu().numpy()[0],
         nplet_dtc.cpu().numpy()[0],
@@ -157,7 +157,6 @@ def nplet_tc_dtc(X: np.ndarray):
         nplet_s.cpu().numpy()[0]
     )
 
-    
 
 def multi_order_meas_gc(X: np.ndarray, min_n: int=3, max_n: Optional[int]=None, batch_size: int=1000000):
     """    

@@ -121,13 +121,13 @@ def o_information(X: torch.Tensor):
     joint_entropy = entropy(X)
     
     # (batch_size, n_features)
-    all_single_entropies = single_entropies(X)
+    all_individual_entropies = single_entropies(X)
 
     # (batch_size, n_features)
-    all_single_exclusion_entropies = single_exclusion_entropies(X)
+    all_residual_entropies = single_exclusion_entropies(X)
 
     # (batch_size, )
-    return (n_variables - 2) * joint_entropy + (all_single_entropies - all_single_exclusion_entropies).sum(dim=1)
+    return (n_variables - 2) * joint_entropy + (all_individual_entropies - all_residual_entropies).sum(dim=1)
 
 
 def multi_order_meas_knn(X: np.ndarray, min_n: int=2, max_n: Optional[int]=None, batch_size: int=1000000):

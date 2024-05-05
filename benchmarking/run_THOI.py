@@ -12,7 +12,7 @@ ESTIMATORS = {
     'knn': multi_order_meas_knn
 }
 
-def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, batch_size, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estimator, batch_size, output_path):
 
     """
         T = number of samples
@@ -30,8 +30,8 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, batch_size
 
 
     rows = []
-    for T in tqdm(range(min_T, max_T+1), leave=False, desc='T'): 
-        for N in tqdm(range(min_N, max_N+1), leave=False, desc='N'):
+    for T in tqdm(range(min_T, max_T+1, step_T), leave=False, desc='T'): 
+        for N in tqdm(range(min_N, max_N+1, step_N), leave=False, desc='N'):
 
             X = np.random.rand(T, N)
 
@@ -53,8 +53,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Test run time for HOI O information')
     parser.add_argument('--min_T', type=int, help='Min number of samples')
+    parser.add_argument('--step_T', type=int, help='Step for number of samples', default=1)
     parser.add_argument('--max_T', type=int, help='Max number of samples', default=None)
     parser.add_argument('--min_N', type=int, help='Min number of features')
+    parser.add_argument('--step_N', type=int, help='Step for number of features', default=1)
     parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
@@ -65,8 +67,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(
-        args.min_T, args.max_T,
-        args.min_N, args.max_N,
+        args.min_T, args.step_T, args.max_T,
+        args.min_N, args.step_N, args.max_N,
         args.min_order, args.max_order,
         args.estimator, args.batch_size,
         args.output_path

@@ -9,6 +9,8 @@ import argparse
 
 from npeet import entropy_estimators as ee
 
+from Oinfo import o_information
+
 import os
 import sys
 
@@ -45,30 +47,7 @@ class systemPartsDataset:
             X_part (np.ndarray): The subset of the data matrix corresponding to the current combination, shape (T, order).
         """
         for part in self.linparts_generator:
-            yield self.X[:,part]
-
-
-def o_information(X: np.ndarray, single_exclusions_mask: np.ndarray, entropy_func):
-    """
-    Calculate the O-information for a given dataset.
-
-    Args:
-        X (np.ndarray): A 2D array representing multivariate features (T samples x order features).
-        single_exclusions_mask (np.ndarray): A boolean mask 2D array to exclude one variable at a time (order x order).
-        entropy_func (callable): Function to compute entropy of the dataset.
-
-    Returns:
-        float: Computed O-information for the dataset.
-    """
-
-    N = X.shape[1]
-    joint_entropy = entropy_func(X)
-    individual_entropies = sum(entropy_func(X[:,[idx]]) for idx in range(N))
-    conditional_entropies = sum(entropy_func(X[:,idxs]) for idxs in single_exclusions_mask)
-
-    # TODO: mirar esta formula y las anteriores porque deveria sumarle element-wise los individual entropies con los conditional entropies
-    # Los condicional no son condicional tampoco, es un mal nombre
-    return (N - 2) * joint_entropy + individual_entropies - conditional_entropies
+            yield part, self.X[:,part]
 
 
 def order_o_information(X, order, entropy_func):
@@ -89,13 +68,19 @@ def order_o_information(X, order, entropy_func):
     assert order <= N, f"ValueError: order must be lower or equal than N. {order} >= {N}"
 
     single_exclusions_mask = (np.ones((order, order)) - np.eye(order)).astype(bool)
+    all_individual_entropies = np.array([entropy_func(X[:, i]) for i in range(N)])
     dataset = systemPartsDataset(X, order)
 
-    for X in tqdm(dataset, total=len(dataset), leave=False, desc='n-plet'):
-        o_information(X, single_exclusions_mask, entropy_func)
+    for (idxs, X) in tqdm(dataset, total=len(dataset), leave=False, desc='n-plet'):
+        o_information(
+            X,
+            entropy_func,
+            single_exclusions_mask=single_exclusions_mask,
+            individual_entropies=all_individual_entropies[idxs] # avoid recomputing individual entropies
+        )
 
 
-def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estimator, output_path):
 
     """
         T = number of samples
@@ -115,8 +100,8 @@ def main(min_T, max_T, min_N, max_N, min_order, max_order, estimator, output_pat
         o_estimator = lambda X: gcmi.ent_g(X.T)
 
     rows = []
-    for T in tqdm(range(min_T, max_T+1), leave=False, desc='T'): 
-        for N in tqdm(range(min_N, max_N+1), leave=False, desc='N'):
+    for T in tqdm(range(min_T, max_T+1, step_T), leave=False, desc='T'): 
+        for N in tqdm(range(min_N, max_N+1, step_N), leave=False, desc='N'):
 
             X = np.random.rand(T, N)
 
@@ -138,8 +123,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Test run time for HOI O information')
     parser.add_argument('--min_T', type=int, help='Min number of samples')
+    parser.add_argument('--step_T', type=int, help='Step for number of samples', default=1)
     parser.add_argument('--max_T', type=int, help='Max number of samples', default=None)
     parser.add_argument('--min_N', type=int, help='Min number of features')
+    parser.add_argument('--step_N', type=int, help='Step for number of features', default=1)
     parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
@@ -149,8 +136,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(
-        args.min_T, args.max_T,
-        args.min_N, args.max_N,
+        args.min_T, args.step_T, args.max_T,
+        args.min_N, args.step_N, args.max_N,
         args.min_order, args.max_order,
         args.estimator,
         args.output_path
