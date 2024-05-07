@@ -1,9 +1,26 @@
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+
+from npeet import entropy_estimators as ee
+from Oinfo.oinfo_gc import nplet_tc_dtc
+
+import sys
 import os
-import argparse
-from pathlib import Path
+
+GCMI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libraries')
+sys.path.append(GCMI_dir)
+
+from gcmi.python import gcmi
+
+
+def npeet_entropy(X:np.ndarray):
+    return ee.entropy(X)
+
+def gcmi_entropy(X:np.ndarray):
+    return gcmi.ent_g(gcmi.copnorm(X.T))
+
+def o_information_thoi(X:np.ndarray):
+    return nplet_tc_dtc(X)[2]
 
 
 def generate_flat_system(alpha=1.0, beta=1.0, gamma=1.0, T=1000):
@@ -56,47 +73,14 @@ def PReLU(X, cutoff=0):
 def NReLU(X, cutoff=0):
     return np.minimum(X,cutoff)
 
-def generate_relu_sistem(alpha=1.0, T=10000):
+def generate_relu_sistem(alpha=1.0, beta=1.0, T=10000):
 
     assert 0 <= alpha <= 1.0, 'alpha must be in range [0,1]'
+    assert 0 <= beta <= 1.0, 'beta must be in range [0,1]'
 
     Z_syn, Z_red = np.random.normal(0, 1, (2,T))
 
-    X1 = alpha*np.sqrt(PReLU(Z_syn))          + (1-alpha)*Z_red
-    X2 = alpha*-np.sqrt(np.abs(NReLU(Z_syn))) + (1-alpha)*Z_red
+    X1 = alpha*np.sqrt(PReLU(Z_syn))          + beta*Z_red
+    X2 = alpha*-np.sqrt(np.abs(NReLU(Z_syn))) + beta*Z_red
 
-    return pd.DataFrame({'X1': X1, 'X2': X2, 'Z_syn': Z_syn})
-
-
-value_range = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-
-def main(output_path: str, T: int):
-
-    Path(output_path).mkdir(parents=True, exist_ok=True)
-
-    for system in tqdm(['flat', 'hierarchical'], leave=False, desc='system'):
-        for alpha in tqdm(value_range, leave=False, desc='alpha'):
-            
-            for beta in tqdm(value_range, leave=False, desc='beta'):
-
-                if system == 'hierarchical':
-                    df = generate_herarchical_system(alpha, beta, T)
-                    df.to_csv(os.path.join(output_path, f'system-{system}_alpha-{alpha:.1f}_beta-{beta:.1f}_t-{T}.tsv'), sep='\t', index=False)
-
-                else:
-                    
-                    for gamma in tqdm(value_range, leave=False, desc='gamma'):
-                        df = generate_flat_system(alpha, beta, gamma, T)
-                        df.to_csv(os.path.join(output_path, f'system-{system}_alpha-{alpha:.1f}_beta-{beta:.1f}_gamma-{gamma:.1f}_t-{T}.tsv'), sep='\t', index=False)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser('generate flat or hierarchical systems and save them into tsv files')
-    parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
-    parser.add_argument('--T', type=int, default=10000, help='Number of samples to generate')
-
-    args = parser.parse_args()
-
-    main(args.output_path, args.T)
-                        
-
-                    
+    return pd.DataFrame({'X1': X1, 'X2': X2, 'Z_syn': Z_syn, 'Z_red': Z_red})

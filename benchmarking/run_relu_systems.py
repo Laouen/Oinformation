@@ -5,38 +5,29 @@ import argparse
 from Oinfo import o_information
 import systems
 
-
 def main(output_path: str, T: int, n_repeat: int):
 
     nplets = [
-        # without sources
-        ['X2','X3','X6'],
-        ['X4','X5','X6'],
-        ['X1','X2','X3','X6'],
-        ['X1','X4','X5','X6'],
-        ['X2','X3','X4','X5','X6'],
-        ['X1','X2','X3','X4','X5','X6'],
-
-        # With sources (Z1 is removed as it's identical to X1)
-        ['Z2','Z3','Z6','X2','X3','X6'],
-        ['Z4','Z5','Z6','X4','X5','X6'],
-        ['Z2','Z3','Z6','X1','X2','X3','X6'],
-        ['Z4','Z5','Z6','X1','X4','X5','X6'],
-        ['Z2','Z3','Z4','Z5','Z6','X2','X3','X4','X5','X6'],
-        ['Z2','Z3','Z4','Z5','Z6','X2','X3','X4','X5','X6']
+        ['Z_syn','Z_red','X1','X2']
     ]
 
-    value_range = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    value_range = [
+        0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09,
+        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+        0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0
+    ]
 
     dfs = []
     for alpha in tqdm(value_range, leave=False, desc='alpha'):
-        for beta in tqdm(value_range, leave=False, desc='beta'):
+        for beta in tqdm(value_range, leave=False, desc='beta'):           
             rows = []
-            for _ in tqdm(range(n_repeat), leave=False, desc='repeat'):
-                data = systems.generate_herarchical_system(alpha=alpha, beta=beta, T=T)
+            for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
+                data = systems.generate_relu_sistem(alpha=alpha, beta=beta, T=T)
 
                 for nplet in tqdm(nplets, leave=False, desc='nplet'):
                     name = '-'.join(nplet)
+
+                    # (n_samples, n_variables)
                     X = data[nplet].values
 
                     rows.append({
@@ -67,10 +58,10 @@ def main(output_path: str, T: int, n_repeat: int):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('generate hierarchical systems and calculate the o information on the systems')
+    parser = argparse.ArgumentParser('generate flat systems and calculate the o information on the systems')
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
     parser.add_argument('--T', type=int, default=10000, help='Number of samples to generate')
-    parser.add_argument('--n_repeat', type=int, default=20, help='Number of samples to generate')
+    parser.add_argument('--n_repeat', type=int, default=200, help='Number of samples to generate')
 
     args = parser.parse_args()
 

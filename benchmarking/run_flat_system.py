@@ -1,41 +1,35 @@
-import numpy as np
 import pandas as pd
-
-from npeet import entropy_estimators as ee
+from tqdm import tqdm
+import argparse
 
 from Oinfo import o_information
-from Oinfo.oinfo_gc import nplet_tc_dtc
+import systems
 
-from .run_generate_systems import generate_flat_system
-
-from tqdm import tqdm
-
-import argparse
-import sys
-import os
-
-GCMI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libraries')
-sys.path.append(GCMI_dir)
-
-from gcmi.python import gcmi
-
-
-def main(output_path: str, T: int):
+def main(output_path: str, T: int, n_repeat: int):
 
     nplets = [
+        # without synergistic and redundant source
         ['X1','X2','X3'],
         ['X1','X2','X3','X4'],
         ['X1','X2','X3','X4', 'X5'],
         ['X1','X2','X3','X4', 'X5', 'X6'],
+
+        # with synergistic and redundant source
+        ['Z00','Z01','X1','X2','X3'],
+        ['Z00','Z01','X1','X2','X3','X4'],
+        ['Z00','Z01','X1','X2','X3','X4', 'X5'],
+        ['Z00','Z01','X1','X2','X3','X4', 'X5', 'X6']
     ]
 
+    value_range = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
     dfs = []
-    for alpha in tqdm(np.arange(0.1, 1.05, 0.1), leave=False, desc='alpha'):
-        for beta in tqdm(np.arange(0.1, 1.05, 0.1), leave=False, desc='beta'):
-            for gamma in tqdm(np.arange(0.1, 1.05, 0.1), leave=False, desc='gamma'):
+    for gamma in tqdm(value_range[5:], leave=False, desc='gamma'):
+        for alpha in tqdm(value_range, leave=False, desc='alpha'):
+            for beta in tqdm(value_range, leave=False, desc='beta'):            
                 rows = []
-                for _ in tqdm(range(5), leave=False, desc='repet'):
-                    data = generate_flat_system(alpha=alpha, beta=beta, gamma=gamma, T=T)
+                for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
+                    data = systems.generate_flat_system(alpha=alpha, beta=beta, gamma=gamma, T=T)
 
                     for nplet in tqdm(nplets, leave=False, desc='nplet'):
                         name = '-'.join(nplet)
@@ -44,19 +38,19 @@ def main(output_path: str, T: int):
                         rows.append({
                             'n-plet': name,
                             'method': 'THOI',
-                            'O-information': nplet_tc_dtc(X)[2]
+                            'O-information': systems.o_information_thoi(X)
                         })
 
                         rows.append({
                             'n-plet': name,
                             'method': 'NPEET',
-                            'O-information': o_information(X, ee.entropy)
+                            'O-information': o_information(X, systems.npeet_entropy)
                         })
 
                         rows.append({
                             'n-plet': name,
                             'method': 'GCMI',
-                            'O-information': o_information(X, lambda X: gcmi.ent_g(X.T))
+                            'O-information': o_information(X, systems.gcmi_entropy)
                         })
 
                 df = pd.DataFrame(rows)
@@ -73,7 +67,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('generate flat systems and calculate the o information on the systems')
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
     parser.add_argument('--T', type=int, default=10000, help='Number of samples to generate')
+    parser.add_argument('--n_repeat', type=int, default=20, help='Number of samples to generate')
 
     args = parser.parse_args()
 
-    main(args.output_path, args.T)
+    main(args.output_path, args.T, args.n_repeat)
