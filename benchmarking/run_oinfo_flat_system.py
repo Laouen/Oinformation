@@ -24,7 +24,7 @@ def main(output_path: str, T: int, n_repeat: int):
     value_range = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     dfs = []
-    for gamma in tqdm(value_range[5:], leave=False, desc='gamma'):
+    for gamma in tqdm(value_range[5:6], leave=False, desc='gamma'):
         for alpha in tqdm(value_range, leave=False, desc='alpha'):
             for beta in tqdm(value_range, leave=False, desc='beta'):            
                 rows = []

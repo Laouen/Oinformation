@@ -12,7 +12,7 @@ python run_oinfo_relu_system.py --output_path ./results/o_info/system-relu_repea
 ### Run entropy estimators analysis ###
 #######################################
 
-python python run_estimators_error.py --output_path ./results/estimators_error_repeat-20.tsv --n_repeat 20
+python run_estimators_error.py --output_path ./results/estimators_error_repeat-20.tsv --n_repeat 20
 
 #######################################
 #### Run computation time analysis ####
