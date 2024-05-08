@@ -6,7 +6,11 @@
 python run_oinfo_flat_system.py --output_path ./results/o_info/system-flat_repeat-20_t-10000.tsv --n_repeat 20 --T 10000
 
 # Generate a relu systems and run the o information
-python run_oinfo_relu_system.py --output_path ./results/o_info/system-relu_repeat-20_t-10000.tsv --n_repeat 20 --T 10000
+python run_oinfo_relu_system.py --output_path ./results/o_info/system-relu_pow-0.5_repeat-20_t-10000.tsv --pow_factor 0.5 --n_repeat 20 --T 10000
+python run_oinfo_relu_system.py --output_path ./results/o_info/system-relu_pow-1.0_repeat-20_t-10000.tsv --pow_factor 1.0 --n_repeat 20 --T 10000
+
+# Generate a xor systems and run the o information
+python run_oinfo_xor_system.py --output_path ./results/o_info/system-xor_repeat-20_t-10000.tsv --n_repeat 20 --T 10000
 
 #######################################
 ### Run entropy estimators analysis ###

@@ -23,7 +23,7 @@ def o_information_thoi(X:np.ndarray):
     return nplet_tc_dtc(X)[2]
 
 
-def generate_flat_system(alpha=1.0, beta=1.0, gamma=1.0, T=1000):
+def generate_flat_system(alpha: float=1.0, beta: float=1.0, gamma: float=1.0, T: int=1000):
 
     assert 0 <= alpha <= 1.0, 'alpha must be in range [0,1]'
     assert 0 <= beta <= 1.0, 'beta must be in range [0,1]'
@@ -46,20 +46,25 @@ def generate_flat_system(alpha=1.0, beta=1.0, gamma=1.0, T=1000):
         'Z00': Z00, 'Z01': Z01
     })
 
-def PReLU(X, cutoff=0):
+def ReLU(X, cutoff=0):
     return np.maximum(X,cutoff)
 
-def NReLU(X, cutoff=0):
-    return np.minimum(X,cutoff)
-
-def generate_relu_sistem(alpha=1.0, beta=1.0, T=10000):
+def generate_relu_sistem(alpha: float=1.0, beta: float=1.0, pow_factor: float=0.5, T: float=10000):
 
     assert 0 <= alpha <= 1.0, 'alpha must be in range [0,1]'
     assert 0 <= beta <= 1.0, 'beta must be in range [0,1]'
 
     Z_syn, Z_red = np.random.normal(0, 1, (2,T))
 
-    X1 = alpha*np.sqrt(PReLU(Z_syn))          + beta*Z_red
-    X2 = alpha*-np.sqrt(np.abs(NReLU(Z_syn))) + beta*Z_red
+    X1 = alpha*np.power(ReLU(Z_syn), pow_factor)          + beta*Z_red
+    X2 = alpha*-np.power(np.abs(ReLU(-Z_syn)), pow_factor) + beta*Z_red
 
     return pd.DataFrame({'X1': X1, 'X2': X2, 'Z_syn': Z_syn, 'Z_red': Z_red})
+
+def generate_continuos_xor(alpha: float=1.0, beta: float=1.0, T: int=10000):
+    X1, X2, Z, Zred = np.random.normal(0, 1, (4, T))
+
+    X1_XOR_X2 = np.logical_xor(X1 > 0, X2 > 0).astype(int)
+    Zxor = alpha*((Z+4) * X1_XOR_X2 + Z * (1-X1_XOR_X2)) + beta*Zred
+
+    return pd.DataFrame({'X1': X1, 'X2': X2, 'Zxor': Zxor, 'Zred': Zred})

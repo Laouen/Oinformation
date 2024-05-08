@@ -6,6 +6,15 @@ import argparse
 import systems
 from sklearn.datasets import make_spd_matrix
 
+def is_pd(matrix):
+
+    try:
+        # Attempt to compute the Cholesky decomposition
+        np.linalg.cholesky(matrix)
+        return True  # Successful decomposition means the matrix is positive definite
+    except np.linalg.LinAlgError:
+        return False  # If the decomposition fails, the matrix is not positive definite
+
 
 def generate_covariance_matrix(n_variables):
 
@@ -28,6 +37,9 @@ def main(output_path: str, n_repeat: int):
 
             mean, covariance = generate_covariance_matrix(n_variables)
             real_entropy = gaussian_entropy(covariance)
+
+            if not is_pd(covariance):
+                print(covariance)
             
             for T in tqdm([10**i + 10**(k*i)//2 for i in range(1,7) for k in range(2)], leave=False, desc='n_samples'):
                 X = np.random.multivariate_normal(mean, covariance, T)
