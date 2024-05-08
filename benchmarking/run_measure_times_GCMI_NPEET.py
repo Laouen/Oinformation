@@ -7,18 +7,9 @@ from tqdm import tqdm
 
 import argparse
 
-from npeet import entropy_estimators as ee
-
 from Oinfo import o_information
+import systems
 
-import os
-import sys
-
-GCMI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'libraries')  # This gets the directory where main.py is located
-print('GCMI dir', GCMI_dir)
-sys.path.append(GCMI_dir)
-
-from gcmi.python import gcmi
 
 class systemPartsDataset:
     def __init__(self, X, order):
@@ -94,10 +85,10 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estim
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
     if estimator == 'npeet':
-        o_estimator = ee.entropy
+        o_estimator = systems.npeet_entropy
 
     elif estimator == 'gcmi':
-        o_estimator = lambda X: gcmi.ent_g(X.T)
+        o_estimator = systems.gcmi_entropy
 
     rows = []
     for T in tqdm(range(min_T, max_T+1, step_T), leave=False, desc='T'): 
@@ -111,11 +102,11 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estim
                 order_o_information(X, order, o_estimator)
                 delta_t = time.time() - start
 
-                rows.append([estimator, T, N, order, delta_t])
+                rows.append([estimator, estimator, T, N, order, delta_t])
 
                 pd.DataFrame(
                     rows,
-                    columns=['estimator', 'T', 'N', 'order', 'time']
+                    columns=['library', 'estimator', 'T', 'N', 'order', 'time']
                 ).to_csv(output_path, sep='\t', index=False)
 
 

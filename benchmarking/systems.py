@@ -14,7 +14,7 @@ from gcmi.python import gcmi
 
 
 def npeet_entropy(X:np.ndarray):
-    return ee.entropy(X)
+    return ee.entropy(X, base=np.e)
 
 def gcmi_entropy(X:np.ndarray):
     return gcmi.ent_g(gcmi.copnorm(X.T))
@@ -44,27 +44,6 @@ def generate_flat_system(alpha=1.0, beta=1.0, gamma=1.0, T=1000):
         'X1': X1, 'X2': X2, 'X3': X3, 'X4': X4, 'X5': X5, 'X6': X6,
         'Z1': Z1, 'Z2': Z2, 'Z3': Z3, 'Z4': Z4, 'Z5': Z5, 'Z6': Z6,
         'Z00': Z00, 'Z01': Z01
-    })
-
-def generate_herarchical_system(alpha=1.0, beta=1.0, T=1000):
-
-    assert 0 <= alpha <= 1.0, 'alpha must be in range [0,1]'
-    assert 0 <= beta <= 1.0, 'beta must be in range [0,1]'
-
-    # Generate base random variables
-    Z1, Z2, Z3, Z4, Z5, Z6 = np.random.normal(0, 1, (6, T))
-
-    # Generate dependent variables
-    X1 = Z1
-    X2 = Z2 + alpha*np.exp(Z3)
-    X3 = (np.log(alpha*np.abs(Z2) + 1) + 1) * Z3
-    X4 = np.sin(Z4) + alpha*np.cos(Z5)
-    X5 = (Z4 / (Z4-alpha*(Z4+1))) * np.sin(Z5)
-    X6 = Z6 + beta*(np.power(X2 + X3, 2) + np.power(X4 + X5, 3))
-
-    return pd.DataFrame({
-        'X1': X1, 'X2': X2, 'X3': X3, 'X4': X4, 'X5': X5, 'X6': X6,
-        'Z1': Z1, 'Z2': Z2, 'Z3': Z3, 'Z4': Z4, 'Z5': Z5, 'Z6': Z6
     })
 
 def PReLU(X, cutoff=0):

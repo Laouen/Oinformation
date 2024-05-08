@@ -4,20 +4,17 @@ from tqdm import tqdm
 import argparse
 
 import systems
+from sklearn.datasets import make_spd_matrix
 
-# TODO: change
-def generate_covariance_matrix(dim, random_state=None):
-    if random_state is not None:
-        np.random.seed(random_state)  # Set random seed for reproducibility
-    
-    # Generate a random matrix A
-    A = np.random.randn(dim, dim)
-    
-    # Calculate the covariance matrix as A * A'
-    covariance_matrix = np.dot(A, A.T)
-    
-    return covariance_matrix
 
+def generate_covariance_matrix(n_variables):
+
+    mean = np.random.uniform(0, 10, n_variables)
+    covariance = make_spd_matrix(n_variables)
+
+    return mean, covariance
+
+    
 def gaussian_entropy(covariance):
     n_variables = covariance.shape[0]
     cov_det = np.linalg.det(covariance) 
@@ -26,14 +23,13 @@ def gaussian_entropy(covariance):
 def main(output_path: str, n_repeat: int):
 
     rows = []
-    for n_variables in tqdm(range(3,10), leave=False, desc='n_variables'):
+    for n_variables in tqdm(range(3,11), leave=False, desc='n_variables'):
         for _ in tqdm(range(n_repeat), leave=False, desc='repeat'):
 
-            mean = np.random.randint(n_variables)
-            covariance = generate_covariance_matrix(n_variables)
+            mean, covariance = generate_covariance_matrix(n_variables)
             real_entropy = gaussian_entropy(covariance)
             
-            for T in tqdm([10**i for i in range(1,10)], leave=False, desc='n_samples'):
+            for T in tqdm([10**i + 10**(k*i)//2 for i in range(1,7) for k in range(2)], leave=False, desc='n_samples'):
                 X = np.random.multivariate_normal(mean, covariance, T)
                 rows.append([
                     n_variables, T, real_entropy,
@@ -41,10 +37,10 @@ def main(output_path: str, n_repeat: int):
                     systems.gcmi_entropy(X)
                 ])
     
-    pd.DataFrame(
-        rows,
-        columns=['n_variables','n_samples','real_entropy','gcmi_entropy','npeet_entropy']
-    ).to_csv(output_path, sep='\t', index=False)
+        pd.DataFrame(
+            rows,
+            columns=['n_variables','n_samples','real_entropy','gcmi_entropy','npeet_entropy']
+        ).to_csv(output_path, sep='\t', index=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('generate hierarchical systems and calculate the o information on the systems')

@@ -1,18 +1,19 @@
-import pandas as pd
 import numpy as np
-import time
+import pandas as pd
 from tqdm import tqdm
 
+import os
+import sys
+import time
 import argparse
 
-from Oinfo import multi_order_meas_gc, multi_order_meas_knn
+HOI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'libraries/HOI_toolbox')  # This gets the directory where main.py is located
+print('HOI Toolbox dir', HOI_dir)
+sys.path.append(HOI_dir)
 
-ESTIMATORS = {
-    'gc': multi_order_meas_gc,
-    'knn': multi_order_meas_knn
-}
+from toolbox.Oinfo import exhaustive_loop_zerolag
 
-def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estimator, batch_size, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estimator, output_path):
 
     """
         T = number of samples
@@ -25,27 +26,34 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estim
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
-
-    multi_order_meas = ESTIMATORS[estimator]
-
+    config = {
+        "higher_order": True,
+        "estimator": estimator,
+        "n_best": 10, 
+        "nboot": 10
+    }
 
     rows = []
     for T in tqdm(range(min_T, max_T+1, step_T), leave=False, desc='T'): 
-        for N in tqdm(range(min_N, max_N+1, step_N), leave=False, desc='N'):
+        for N in tqdm(range(min_N, max_N+1, step_N), leave=False, desc='T'):
 
-            X = np.random.rand(T, N)
+            X = np.random.rand(N, T)
 
             for order in tqdm(range(min_order, max_order+1), leave=False, desc='Order'):
 
+                config['minsize'] = order
+                config['maxsize'] = order
+
                 start = time.time()
-                multi_order_meas(X, order, order, batch_size)
+                exhaustive_loop_zerolag(X, config)
                 delta_t = time.time() - start
 
-                rows.append(['ours_' + estimator, T, N, order, delta_t])
+                rows.append(['HOI', estimator, T, N, order, delta_t])
 
+                # Save to disk current data to avoid data lost if script stops
                 pd.DataFrame(
                     rows,
-                    columns=['estimator', 'T', 'N', 'order', 'time']
+                    columns=['library', 'estimator' ,'T','N','order', 'time']
                 ).to_csv(output_path, sep='\t', index=False)
 
 
@@ -60,8 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
-    parser.add_argument('--estimator', type=str, choices=['gc', 'knn'])
-    parser.add_argument('--batch_size', type=int, default=1000000)
+    parser.add_argument('--estimator', type=str, choices=['gcmi', 'lin_est'])
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
     args = parser.parse_args()
@@ -70,6 +77,6 @@ if __name__ == '__main__':
         args.min_T, args.step_T, args.max_T,
         args.min_N, args.step_N, args.max_N,
         args.min_order, args.max_order,
-        args.estimator, args.batch_size,
+        args.estimator,
         args.output_path
     )
