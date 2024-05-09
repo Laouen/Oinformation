@@ -56,8 +56,8 @@ def generate_relu_sistem(alpha: float=1.0, beta: float=1.0, pow_factor: float=0.
 
     Z_syn, Z_red = np.random.normal(0, 1, (2,T))
 
-    X1 = alpha*np.power(ReLU(Z_syn), pow_factor)          + beta*Z_red
-    X2 = alpha*-np.power(np.abs(ReLU(-Z_syn)), pow_factor) + beta*Z_red
+    X1 = alpha*np.power(ReLU(Z_syn), pow_factor)    + beta*Z_red
+    X2 = -alpha*np.power(ReLU(-Z_syn), pow_factor)  + beta*Z_red
 
     return pd.DataFrame({'X1': X1, 'X2': X2, 'Z_syn': Z_syn, 'Z_red': Z_red})
 
@@ -65,6 +65,6 @@ def generate_continuos_xor(alpha: float=1.0, beta: float=1.0, T: int=10000):
     X1, X2, Z, Zred = np.random.normal(0, 1, (4, T))
 
     X1_XOR_X2 = np.logical_xor(X1 > 0, X2 > 0).astype(int)
-    Zxor = alpha*((Z+4) * X1_XOR_X2 + Z * (1-X1_XOR_X2)) + beta*Zred
+    Zxor = alpha*(Z + 4*X1_XOR_X2) + beta*Zred
 
     return pd.DataFrame({'X1': X1, 'X2': X2, 'Zxor': Zxor, 'Zred': Zred})
