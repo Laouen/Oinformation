@@ -3,32 +3,37 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RunOinfoReLUSystem {
+public class RunOinfoFlatSystem {
 
     public static void main(String[] args) {
 
         try {
             String outputPath = args[0];
-            double powFactorValue = Float.parseFloat(args[1]);;
+            double gamma = Float.parseFloat(args[1]);;
             int T = 10000;
             int nRepeat = 20;
-            String[] columns = {"n-plet", "method", "alpha", "beta", "O-information"};
+            String[] columns = {"n-plet", "method", "O-information", "alpha", "beta", "gamma"};
 
             System.out.println("Parameter: ");
             System.out.println("outputPath: " + outputPath);
-            System.out.println("powFactorValue: " + powFactorValue);
+            System.out.println("gamma: " + gamma);
             System.out.println("T: " + T);
             System.out.println("nRepeat: " + nRepeat);
         
             String[][] npletas = {
-                {"X1", "X2", "Z_syn"},
-                {"X1", "X2", "Z_syn", "Z_red"}
+                // without synergistic and redundant source
+                {"X1","X2","X3"},
+                {"X1","X2","X3","X4"},
+                {"X1","X2","X3","X4", "X5"},
+                {"X1","X2","X3","X4", "X5", "X6"},
+
+                // with synergistic and redundant source
+                {"Z00","Z01","X1","X2","X3"},
+                {"Z00","Z01","X1","X2","X3","X4"},
+                {"Z00","Z01","X1","X2","X3","X4", "X5"},
+                {"Z00","Z01","X1","X2","X3","X4", "X5", "X6"}
             };
-            double[] alphaValues = {
-                0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09,
-                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-                0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99
-            };
+            double[] alphaValues = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
             double[] betaValues = alphaValues; // Same as alpha values for simplicity
 
             List<List<String>> rows = new ArrayList<List<String>>();
@@ -42,7 +47,7 @@ public class RunOinfoReLUSystem {
                     for (int j = 0; j < nRepeat; j++) {
 
                         // Generate random system
-                        RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateReLUSystem(alpha, beta, powFactorValue, T);
+                        RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateFlatSystem(alpha, beta, gamma, T);
                         for(int i = 0; i < npletas.length; i++) {
 
                             String[] nplet = npletas[i];
@@ -68,9 +73,10 @@ public class RunOinfoReLUSystem {
                         List<String> row = Arrays.asList(
                             RandomSystemsGenerator.getNpletName(nplet),
                             "JDIT",
+                            String.valueOf(nplet_oinfo),
                             String.valueOf(alpha),
                             String.valueOf(beta),
-                            String.valueOf(nplet_oinfo)
+                            String.valueOf(gamma)
                         );
 
                         rows.add(row);

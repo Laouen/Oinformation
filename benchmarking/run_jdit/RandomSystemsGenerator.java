@@ -1,6 +1,7 @@
 import java.util.Random;
 import java.util.Arrays;
 import java.util.List;
+import java.lang.Math;
 
 public class RandomSystemsGenerator {
 
@@ -48,7 +49,7 @@ public class RandomSystemsGenerator {
         return nplet_name + "-" + variables[variables.length-1];
     };
 
-    public static RandomSystem<String> generateReluSystem(double alpha, double beta, double powFactor, int T) {
+    public static RandomSystem<String> generateReLUSystem(double alpha, double beta, double powFactor, int T) {
         if (!(0 <= alpha && alpha <= 1.0) || !(0 <= beta && beta <= 1.0)) {
             throw new IllegalArgumentException("alpha and beta must be in range [0,1]");
         }
@@ -99,7 +100,37 @@ public class RandomSystemsGenerator {
         return result;
     };
 
-    public static RandomSystem<Integer> indepentendNormalSystem(int T, int N) {
+    public static RandomSystem<String> generateFlatSystem(double alpha, double beta, double gamma, int T) {
+
+        if (!(0 <= alpha && alpha <= 1.0) || !(0 <= beta && beta <= 1.0)) {
+            throw new IllegalArgumentException("alpha and beta must be in range [0,1]");
+        }
+
+        Random random = new Random();
+        double[][] data = new double[T][8];  // 4 columns for X1, ..., X6, Z00, Z01
+
+        for (int i = 0; i < T; i++) {
+
+            double Z00 = random.nextGaussian();
+            double Z01 = random.nextGaussian();
+
+            data[i][0] = gamma*random.nextGaussian() + beta*Z01 + alpha*Math.log(Math.abs(Z00)); // X1
+            data[i][1] = gamma*random.nextGaussian() + beta*Z01 + alpha*Z00; // X2
+            data[i][2] = gamma*random.nextGaussian() + beta*Z01 + alpha*Math.pow(Z00,2); // X3
+            data[i][3] = gamma*random.nextGaussian() + beta*Z01 + alpha*Math.exp(Z00); // X4
+            data[i][4] = gamma*random.nextGaussian() + beta*Z01 + alpha*Math.sin(Z00); // X5
+            data[i][5] = gamma*random.nextGaussian() + beta*Z01 + alpha*Math.cos(Z00); // X6
+
+            data[i][6] = Z00;
+            data[i][7] = Z01;
+        }
+
+        String[] columns = {"X1", "X2", "X3", "X4", "X5", "X6", "Z00", "Z01"};
+        RandomSystem<String> result = new RandomSystem<String>(data, columns);
+        return result;
+    };
+
+    public static RandomSystem<Integer> generateMultivariateNormal(int T, int N) {
 
         Random random = new Random();
         double[][] data = new double[T][N];

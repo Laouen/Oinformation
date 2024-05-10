@@ -56,7 +56,7 @@ public class RunMeasureTimesJDIT {
             int max_order = 20;
 
             String outputPath = args[0];
-            String[] columns = {"library", "estimator", "T", "N", "time"};
+            String[] columns = {"library", "estimator", "T", "N", "order", "time"};
 
             List<List<String>> rows = new ArrayList<>();
 
@@ -65,7 +65,7 @@ public class RunMeasureTimesJDIT {
                     
                     System.out.println("Processing T=" + T + ", N=" + N);
                     
-                    RandomSystemsGenerator.RandomSystem<Integer> system = RandomSystemsGenerator.indepentendNormalSystem(T, N);
+                    RandomSystemsGenerator.RandomSystem<Integer> system = RandomSystemsGenerator.generateMultivariateNormal(T, N);
                     
                     for (int order = min_order; order <= max_order; order++) {
 
@@ -79,7 +79,7 @@ public class RunMeasureTimesJDIT {
                         rows.add(Arrays.asList(
                             "JDIT", "KNN",
                             String.valueOf(T), String.valueOf(N),
-                            String.valueOf(timeElapsed)
+                            String.valueOf(order), String.valueOf(timeElapsed)
                         ));
                         TSVWriter.writeToTSV(rows, outputPath, columns);
                     }
