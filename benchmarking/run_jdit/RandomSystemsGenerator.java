@@ -1,27 +1,30 @@
 import java.util.Random;
 import java.util.Arrays;
+import java.util.List;
 
 public class RandomSystemsGenerator {
 
-    public static class RandomSystem {
+    public static class RandomSystem<T> {
         private double[][] data; // (n_samples, n_variables)
-        private String[] columns;
+        public final T[] columns;
 
-        public RandomSystem(double[][] data, String[] columns) {
+        public RandomSystem(double[][] data, T[] columns) {
             this.data = data;
             this.columns = columns;
         }
 
-        public double[][] getNPletData(String[] nplet) {
+        public double[][] getNPletData(T[] nplet) {
 
             int N = nplet.length;
             int T = this.data.length;
 
             double[][] result = new double[T][N];
 
+            List<T> nplet_list = Arrays.asList(nplet);
+
             // For each variable i
             for (int j = 0; j < N; j++) {
-                if (Arrays.asList(nplet).contains(this.columns[j])) {
+                if (nplet_list.contains(this.columns[j])) {
                     for (int i = 0; i < T; i++) {
                         result[i][j] = this.data[i][j];
                     }
@@ -30,6 +33,8 @@ public class RandomSystemsGenerator {
 
             return result;
         }
+
+
     };
 
     public static String getNpletName(String[] variables) {
@@ -43,7 +48,7 @@ public class RandomSystemsGenerator {
         return nplet_name + "-" + variables[variables.length-1];
     };
 
-    public static RandomSystem generateReluSystem(double alpha, double beta, double powFactor, int T) {
+    public static RandomSystem<String> generateReluSystem(double alpha, double beta, double powFactor, int T) {
         if (!(0 <= alpha && alpha <= 1.0) || !(0 <= beta && beta <= 1.0)) {
             throw new IllegalArgumentException("alpha and beta must be in range [0,1]");
         }
@@ -62,11 +67,11 @@ public class RandomSystemsGenerator {
         }
 
         String[] columns = {"X1", "X2", "Z_syn", "Z_red"};
-        RandomSystem result = new RandomSystem(data, columns);
+        RandomSystem<String> result = new RandomSystem<String>(data, columns);
         return result;
     };
 
-    public static RandomSystem generateContinuousXOR(double alpha, double beta, int T) {
+    public static RandomSystem<String> generateContinuousXOR(double alpha, double beta, int T) {
         if (!(0 <= alpha && alpha <= 1.0) || !(0 <= beta && beta <= 1.0)) {
             throw new IllegalArgumentException("alpha and beta must be in range [0,1]");
         }
@@ -90,7 +95,27 @@ public class RandomSystemsGenerator {
         }
 
         String[] columns = {"X1", "X2", "Z_syn", "Z_red"};
-        RandomSystem result = new RandomSystem(data, columns);
+        RandomSystem<String> result = new RandomSystem<String>(data, columns);
+        return result;
+    };
+
+    public static RandomSystem<Integer> indepentendNormalSystem(int T, int N) {
+
+        Random random = new Random();
+        double[][] data = new double[T][N];
+
+        for (int i = 0; i < T; i++) {
+            for (int j = 0; j < N; j++) {
+                data[i][j] = random.nextGaussian();
+            }
+        }
+
+        Integer[] columns = new Integer[N];
+        for (int i = 0; i < N; i++) {
+            columns[i] = i;
+        }
+
+        RandomSystem<Integer> result = new RandomSystem<Integer>(data, columns);
         return result;
     };
 }

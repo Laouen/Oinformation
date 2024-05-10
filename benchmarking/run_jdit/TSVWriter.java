@@ -1,10 +1,12 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
+import java.util.Iterator;
 
 public class TSVWriter {
 
-    public static void writeToTSV(String[][] data, String outputPath, String[] columns) throws IOException {
+    public static void writeToTSV(List<List<String>> data, String outputPath, String[] columns) throws IOException {
         // Create a BufferedWriter instance to write to the specified output path
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
             // Write column headers separated by tabs
@@ -17,10 +19,11 @@ public class TSVWriter {
             writer.newLine();  // Move to the next line after headers
 
             // Write data rows
-            for (String[] row : data) {
-                for (int j = 0; j < row.length; j++) {
-                    writer.write(row[j]);
-                    if (j < row.length - 1) {
+            for (List<String> row : data) {
+                Iterator<String> it = row.iterator();
+                while (it.hasNext()) {
+                    writer.write(it.next());
+                    if (it.hasNext()) {
                         writer.write("\t");  // Tab-separated
                     }
                 }

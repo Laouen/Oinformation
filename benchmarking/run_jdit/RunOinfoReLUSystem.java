@@ -1,13 +1,15 @@
 import infodynamics.measures.continuous.kraskov.OInfoCalculatorKraskov;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RunOinfoReLUSystem {
 
     public static void main(String[] args) {
 
         try {
-            String outputPath = "./results.tsv";
-            double powFactorValue = 0.5;
+            String outputPath = args[0];
+            double powFactorValue = Float.parseFloat(args[1]);;
             int T = 10000;
             int nRepeat = 20;
             String[] columns = {"n-plet", "method", "alpha", "beta", "O-information"};
@@ -29,9 +31,8 @@ public class RunOinfoReLUSystem {
             };
             double[] betaValues = alphaValues; // Same as alpha values for simplicity
 
-            String[][] rows = new String[alphaValues.length*betaValues.length*npletas.length][5];
-
-            int a = 0;
+            List<List<String>> rows = new ArrayList<List<String>>();
+            
             for (double alpha : alphaValues) {
                 for (double beta : betaValues) {
                     
@@ -41,7 +42,7 @@ public class RunOinfoReLUSystem {
                     for (int j = 0; j < nRepeat; j++) {
 
                         // Generate random system
-                        RandomSystemsGenerator.RandomSystem system = RandomSystemsGenerator.generateReluSystem(alpha, beta, powFactorValue, T);
+                        RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateReluSystem(alpha, beta, powFactorValue, T);
                         for(int i = 0; i < npletas.length; i++) {
 
                             String[] nplet = npletas[i];
@@ -64,12 +65,15 @@ public class RunOinfoReLUSystem {
 
                         double nplet_oinfo = Arrays.stream(npletOInfos[i]).average().getAsDouble();
 
-                        rows[a][0] = RandomSystemsGenerator.getNpletName(nplet);
-                        rows[a][1] = "JDIT";
-                        rows[a][2] = String.valueOf(alpha);
-                        rows[a][3] = String.valueOf(beta);
-                        rows[a][4] = String.valueOf(nplet_oinfo);
-                        a = a + 1;
+                        List<String> row = Arrays.asList(
+                            RandomSystemsGenerator.getNpletName(nplet),
+                            "JDIT",
+                            String.valueOf(alpha),
+                            String.valueOf(beta),
+                            String.valueOf(nplet_oinfo)
+                        );
+
+                        rows.add(row);
                     }
                 }
             }
