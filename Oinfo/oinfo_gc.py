@@ -186,7 +186,7 @@ def multi_order_meas_gc(X: np.ndarray, min_n: int=3, max_n: Optional[int]=None, 
         dataset = CovarianceDataset(covmat, N, order)
         chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
-        pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size))
+        pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size), leave=False)
         for i, (partition_idxs, partition_covmat) in pbar:
 
             partition_covmat.to(device)
