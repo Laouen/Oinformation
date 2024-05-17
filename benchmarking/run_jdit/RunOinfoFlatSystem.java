@@ -9,14 +9,12 @@ public class RunOinfoFlatSystem {
 
         try {
             String outputPath = args[0];
-            double gamma = Float.parseFloat(args[1]);;
             int T = 10000;
             int nRepeat = 20;
             String[] columns = {"n-plet", "method", "O-information", "alpha", "beta", "gamma"};
 
             System.out.println("Parameter: ");
             System.out.println("outputPath: " + outputPath);
-            System.out.println("gamma: " + gamma);
             System.out.println("T: " + T);
             System.out.println("nRepeat: " + nRepeat);
         
@@ -28,12 +26,14 @@ public class RunOinfoFlatSystem {
                 {"X1","X2","X3","X4", "X5", "X6"},
 
                 // with synergistic and redundant source
-                {"Z00","Z01","X1","X2","X3"},
-                {"Z00","Z01","X1","X2","X3","X4"},
-                {"Z00","Z01","X1","X2","X3","X4", "X5"},
+                //{"Z00","Z01","X1","X2","X3"},
+                //{"Z00","Z01","X1","X2","X3","X4"},
+                //{"Z00","Z01","X1","X2","X3","X4", "X5"},
+                {"Z00","X1","X2","X3","X4", "X5", "X6"},
+                {"Z01","X1","X2","X3","X4", "X5", "X6"},
                 {"Z00","Z01","X1","X2","X3","X4", "X5", "X6"}
             };
-            double[] alphaValues = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+            double[] alphaValues = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
             double[] betaValues = alphaValues; // Same as alpha values for simplicity
 
             List<List<String>> rows = new ArrayList<List<String>>();
@@ -47,7 +47,7 @@ public class RunOinfoFlatSystem {
                     for (int j = 0; j < nRepeat; j++) {
 
                         // Generate random system
-                        RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateFlatSystem(alpha, beta, gamma, T);
+                        RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateFlatSystem(alpha, beta, 0.1, T);
                         for(int i = 0; i < npletas.length; i++) {
 
                             String[] nplet = npletas[i];
@@ -76,7 +76,7 @@ public class RunOinfoFlatSystem {
                             String.valueOf(nplet_oinfo),
                             String.valueOf(alpha),
                             String.valueOf(beta),
-                            String.valueOf(gamma)
+                            String.valueOf(0.1)
                         );
 
                         rows.add(row);

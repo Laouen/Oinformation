@@ -15,16 +15,18 @@ def main(output_path: str, T: int, n_repeat: int):
         ['X1','X2','X3','X4', 'X5', 'X6'],
 
         # with synergistic and redundant source
-        ['Z00','Z01','X1','X2','X3'],
-        ['Z00','Z01','X1','X2','X3','X4'],
-        ['Z00','Z01','X1','X2','X3','X4', 'X5'],
+        #['Z00','Z01','X1','X2','X3'],
+        #['Z00','Z01','X1','X2','X3','X4'],
+        #['Z00','Z01','X1','X2','X3','X4', 'X5'],
+        ['Z00','X1','X2','X3','X4', 'X5', 'X6'],
+        ['Z01','X1','X2','X3','X4', 'X5', 'X6'],
         ['Z00','Z01','X1','X2','X3','X4', 'X5', 'X6']
     ]
 
-    value_range = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    value_range = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     dfs = []
-    for gamma in tqdm(value_range[:1], leave=False, desc='gamma'):
+    for gamma in tqdm([0.1], leave=False, desc='gamma'):
         for alpha in tqdm(value_range, leave=False, desc='alpha'):
             for beta in tqdm(value_range, leave=False, desc='beta'):            
                 rows = []

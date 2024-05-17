@@ -10,17 +10,16 @@ def main(output_path: str, pow_factor: float, T: int, n_repeat: int):
     nplets = [
         ['X1','X2','Z_syn','Z_red'],
         ['X1','X2','Z_syn'],
+        ['X1','X2','Z_red'],
     ]
 
     value_range = [
-        0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09,
-        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-        0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0
+        0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
     ]
 
     dfs = []
     for alpha in tqdm(value_range, leave=False, desc='alpha'):
-        for beta in tqdm(value_range, leave=False, desc='beta'):           
+        for beta in tqdm(value_range, leave=False, desc='beta'):        
             rows = []
             for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
                 data = systems.generate_relu_sistem(alpha=alpha, beta=beta, pow_factor=pow_factor, T=T)

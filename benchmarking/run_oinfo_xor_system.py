@@ -8,53 +8,49 @@ import systems
 def main(output_path: str, T: int, n_repeat: int):
 
     nplets = [
-        ['X1','X2','Zxor']
+        ['X1','X2','Zxor'],
     ]
 
     value_range = [
-        0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09,
-        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-        0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0
+        0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
     ]
 
     dfs = []
-    for alpha in tqdm(value_range, leave=False, desc='alpha'):
-        for beta in tqdm(value_range, leave=False, desc='beta'):           
-            rows = []
-            for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
-                data = systems.generate_continuos_xor(alpha=alpha, beta=beta, T=T)
+    for alpha in tqdm(value_range, leave=False, desc='alpha'):           
+        rows = []
+        for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
+            data = systems.generate_continuos_xor(alpha=alpha, T=T)
 
-                for nplet in tqdm(nplets, leave=False, desc='nplet'):
-                    name = '-'.join(nplet)
+            for nplet in tqdm(nplets, leave=False, desc='nplet'):
+                name = '-'.join(nplet)
 
-                    # (n_samples, n_variables)
-                    X = data[nplet].values
+                # (n_samples, n_variables)
+                X = data[nplet].values
 
-                    rows.append({
-                        'n-plet': name,
-                        'method': 'THOI',
-                        'O-information': systems.o_information_thoi(X)
-                    })
+                rows.append({
+                    'n-plet': name,
+                    'method': 'THOI',
+                    'O-information': systems.o_information_thoi(X)
+                })
 
-                    rows.append({
-                        'n-plet': name,
-                        'method': 'NPEET',
-                        'O-information': o_information(X, systems.npeet_entropy)
-                    })
+                rows.append({
+                    'n-plet': name,
+                    'method': 'NPEET',
+                    'O-information': o_information(X, systems.npeet_entropy)
+                })
 
-                    rows.append({
-                        'n-plet': name,
-                        'method': 'GCMI',
-                        'O-information': o_information(X, systems.gcmi_entropy)
-                    })
+                rows.append({
+                    'n-plet': name,
+                    'method': 'GCMI',
+                    'O-information': o_information(X, systems.gcmi_entropy)
+                })
 
-            df = pd.DataFrame(rows)
-            df = df.groupby(['n-plet', 'method']).mean().reset_index()
-            df['alpha'] = alpha
-            df['beta'] = beta
+        df = pd.DataFrame(rows)
+        df = df.groupby(['n-plet', 'method']).mean().reset_index()
+        df['alpha'] = alpha
 
-            dfs.append(df)
-            pd.concat(dfs).to_csv(output_path, sep='\t', index=False)
+        dfs.append(df)
+        pd.concat(dfs).to_csv(output_path, sep='\t', index=False)
 
 
 if __name__ == '__main__':
