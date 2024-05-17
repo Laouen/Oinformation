@@ -13,6 +13,11 @@ sys.path.append(HOI_dir)
 
 from toolbox.Oinfo import exhaustive_loop_zerolag
 
+ESTIMATOR_FUNC = {
+    'gcmi': 'GC',
+    'lin_est': 'LIN-EST'
+}
+
 def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estimator, output_path):
 
     """
@@ -48,7 +53,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estim
                 exhaustive_loop_zerolag(X, config)
                 delta_t = time.time() - start
 
-                rows.append(['HOI', estimator, T, N, order, delta_t])
+                rows.append(['HOI', ESTIMATOR_FUNC[estimator], T, N, order, delta_t])
 
                 # Save to disk current data to avoid data lost if script stops
                 pd.DataFrame(

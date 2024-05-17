@@ -16,8 +16,10 @@ from gcmi.python import gcmi
 def npeet_entropy(X:np.ndarray):
     return ee.entropy(X, base=np.e)
 
+
 def gcmi_entropy(X:np.ndarray):
     return gcmi.ent_g(gcmi.copnorm(X.T))
+
 
 def o_information_thoi(X:np.ndarray):
     return nplet_tc_dtc(X)[2]
@@ -46,8 +48,10 @@ def generate_flat_system(alpha: float=1.0, beta: float=1.0, gamma: float=1.0, T:
         'Z00': Z00, 'Z01': Z01
     })
 
+
 def ReLU(X, cutoff=0):
     return np.maximum(X,cutoff)
+
 
 def generate_relu_sistem(alpha: float=1.0, beta: float=1.0, pow_factor: float=0.5, T: float=10000):
 
@@ -60,6 +64,7 @@ def generate_relu_sistem(alpha: float=1.0, beta: float=1.0, pow_factor: float=0.
     X2 = -alpha*np.power(ReLU(-Z_syn), pow_factor)  + beta*Z_red
 
     return pd.DataFrame({'X1': X1, 'X2': X2, 'Z_syn': Z_syn, 'Z_red': Z_red})
+
 
 def generate_continuos_xor(alpha: float=1.0, T: int=10000):
     X1, X2, Z = np.random.normal(0, 1, (3, T))

@@ -3,7 +3,7 @@
 
 ## RunMeasureTimesJDIT
 javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunMeasureTimesJDIT.java
-java -cp .:infodynamics.jar RunMeasureTimesJDIT ../results/o_info/library-jdit_estimator-knn.tsv
+java -cp .:infodynamics.jar RunMeasureTimesJDIT ../results/o_info/library-jdit_estimator-ksg.tsv
 
 ## RunOinfoReLUSytem
 javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunOinfoReLUSystem.java

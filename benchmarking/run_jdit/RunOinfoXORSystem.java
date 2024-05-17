@@ -11,7 +11,7 @@ public class RunOinfoXORSystem {
             String outputPath = args[0];
             int T = 10000;
             int nRepeat = 20;
-            String[] columns = {"n-plet", "method", "alpha", "beta", "O-information"};
+            String[] columns = {"n-plet", "method", "alpha", "O-information"};
 
             System.out.println("Parameter: ");
             System.out.println("outputPath: " + outputPath);
@@ -35,7 +35,7 @@ public class RunOinfoXORSystem {
                 for (int j = 0; j < nRepeat; j++) {
 
                     // Generate random system
-                    RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateXORSystem(alpha, beta, T);
+                    RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateXORSystem(alpha, T);
                     for(int i = 0; i < npletas.length; i++) {
 
                         String[] nplet = npletas[i];
@@ -62,7 +62,6 @@ public class RunOinfoXORSystem {
                         RandomSystemsGenerator.getNpletName(nplet),
                         "JDIT",
                         String.valueOf(alpha),
-                        String.valueOf(beta),
                         String.valueOf(nplet_oinfo)
                     );
 

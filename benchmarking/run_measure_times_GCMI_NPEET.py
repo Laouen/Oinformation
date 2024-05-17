@@ -71,7 +71,7 @@ def order_o_information(X, order, entropy_func):
         )
 
 
-def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estimator, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, library, output_path):
 
     """
         T = number of samples
@@ -84,11 +84,13 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estim
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
-    if estimator == 'npeet':
+    if library == 'NPEET':
         o_estimator = systems.npeet_entropy
+        estimator = 'KSG'
 
-    elif estimator == 'gcmi':
+    elif library == 'GCMI':
         o_estimator = systems.gcmi_entropy
+        estimator = 'GC'
 
     rows = []
     for T in tqdm(range(min_T, max_T+1, step_T), leave=False, desc='T'): 
@@ -102,7 +104,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, estim
                 order_o_information(X, order, o_estimator)
                 delta_t = time.time() - start
 
-                rows.append([estimator, estimator, T, N, order, delta_t])
+                rows.append([library, estimator, T, N, order, delta_t])
 
                 pd.DataFrame(
                     rows,
@@ -121,7 +123,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_N', type=int, help='Max number of features', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
-    parser.add_argument('--estimator', type=str, choices=['gcmi', 'npeet'])
+    parser.add_argument('--library', type=str, choices=['GCMI', 'NPEET'])
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
     args = parser.parse_args()

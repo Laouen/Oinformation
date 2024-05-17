@@ -12,6 +12,11 @@ ESTIMATORS = {
     'knn': multi_order_meas_knn
 }
 
+ESTIMATORS_FUNC = {
+    'gc': 'GC',
+    'knn': 'KSG'
+}
+
 def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, estimator, batch_size, output_path):
 
     """
@@ -43,7 +48,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
                     multi_order_meas(X, order, order, batch_size)
                     delta_t = time.time() - start
 
-                    rows.append(['THOI', estimator, T, N, batch_size, order, delta_t])
+                    rows.append(['THOI', ESTIMATORS_FUNC[estimator], T, N, batch_size, order, delta_t])
 
                     pd.DataFrame(
                         rows,

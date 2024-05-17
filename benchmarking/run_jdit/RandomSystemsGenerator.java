@@ -73,7 +73,7 @@ public class RandomSystemsGenerator {
     };
 
     public static RandomSystem<String> generateXORSystem(double alpha, int T) {
-        if (!(0 <= alpha && alpha <= 1.0) || !(0 <= beta && beta <= 1.0)) {
+        if (!(0 <= alpha && alpha <= 1.0)) {
             throw new IllegalArgumentException("alpha and beta must be in range [0,1]");
         }
 
