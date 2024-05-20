@@ -1,48 +1,17 @@
-from typing import Optional
+from typing import Optional, Callable
+
+import os
+from tqdm.autonotebook import tqdm
+
+from concurrent.futures import ThreadPoolExecutor
 
 import scipy as sp
 import numpy as np
-
-from tqdm.autonotebook import tqdm
-
 import pandas as pd
 import torch
-
-from .dataset import CovarianceDataset
 from torch.utils.data import DataLoader
 
-
-def _save_to_csv(output_path, nplet_tc, nplet_dtc, nplet_o, nplet_s, linparts, psizes, N, only_synergestic=False):
-
-    # if only_synergestic; remove nplets with nplet_o >= 0
-    if only_synergestic:
-        print('Removing non synergetic values')
-        to_keep = np.where(nplet_o < 0)[0]
-        nplet_tc = nplet_tc[to_keep]
-        nplet_dtc = nplet_dtc[to_keep]
-        nplet_o = nplet_o[to_keep]
-        nplet_s = nplet_s[to_keep]
-        linparts = [linparts[i] for i in to_keep]
-        psizes = psizes[to_keep]
-
-    df_res = pd.DataFrame({
-        'tc': nplet_tc,
-        'dtc': nplet_dtc,
-        'o': nplet_o,
-        's': nplet_s,
-        'psizes': psizes
-    })
-
-    # create a numpy matrix of with len(nplet_s) rows and N columns
-    # each row is a boolean vector with True in the indexes of the nplet
-    # and False in the rest
-    nplet_matrix = np.zeros((len(nplet_s), N), dtype=bool)
-    for i, nplet in tqdm(enumerate(linparts), total=len(linparts), leave=False, desc='Creating nplet matrix'):
-        nplet_matrix[i, nplet] = True
-
-    df_res = pd.concat([df_res, pd.DataFrame(nplet_matrix)], axis=1)
-
-    df_res.to_csv(output_path, index=False)
+from .dataset import CovarianceDataset
 
 
 def data2gaussian(X):
@@ -109,7 +78,7 @@ def _get_tc_dtc_from_batched_covmat(covmat: torch.Tensor, allmin1, bc1: float, b
 
     # |bz|
     sys_ent = _gaussian_entropy_estimation(batch_det, n_variables) - bcN
-    # TODO: The single variable entropies are always the same.
+
     # This could be calculated once at the begining and then accessed here.
     var_ents = _gaussian_entropy_estimation(single_var_dets, 1) - bc1
     # |bz| x |N|
@@ -118,7 +87,7 @@ def _get_tc_dtc_from_batched_covmat(covmat: torch.Tensor, allmin1, bc1: float, b
 
     # |bz|
     nplet_tc = torch.sum(var_ents, dim=1) - sys_ent
-    # TODO: -inf - inf return NaN in pytorch. Check how should I handle this.
+    # TODO: inf - inf return NaN in pytorch. Check how should I handle this.
     # |bz|
     nplet_dtc = torch.sum(ent_min_one, dim=1) - (n_variables-1.0)*sys_ent
 
@@ -156,68 +125,73 @@ def nplet_tc_dtc(X: np.ndarray):
     )
 
 
-def multi_order_meas_gc(X: np.ndarray, min_n: int=3, max_n: Optional[int]=None, batch_size: int=1000000):
-    """    
-    data = T samples x N variables matrix    
-    
+# TODO: use a collector as parameter with save_to_csv as default
+def multi_order_meas_gc(X: np.ndarray,
+                        min_order: int=3,
+                        max_order: Optional[int]=None,
+                        batch_size: int = 1000000,
+                        use_cpu: bool = False):
+    """
+    Compute multi-order Gaussian Copula (GC) measurements for the given data matrix X.
+
+    Args:
+        X (np.ndarray): T samples x N variables matrix.
+        min_order (int): Minimum order to compute (default: 3).
+        max_order (Optional[int]): Maximum order to compute (default: None, will use N).
+        batch_size (int): Batch size for DataLoader (default: 1000000).
+        use_cpu (bool): If true, it forces to use CPU even if GPU is available (default: False).
+
+    Returns:
+        pd.DataFrame: DataFrame containing computed metrics.
     """
 
-    # make device cpu if not cuda available or cuda if available
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
     T, N = np.shape(X)
-    n = N if max_n is None else max_n
+    max_order = N if max_order is None else max_order
 
-    assert n < N, "max_n must be lower than len(elids). max_n >= len(elids))"
-    assert min_n <= n, "min_n must be lower or equal than max_n. min_n > max_n"
+    assert max_order <= N, f"max_order must be lower or equal than N. {max_order} > {N})"
+    assert min_order <= max_order, f"min_order must be lower or equal than max_order. {min_order} > {max_order}"
+
+    # make device cpu if not cuda available or cuda if available
+    using_GPU = torch.cuda.is_available() and not use_cpu
+    device = torch.device('cuda' if using_GPU else 'cpu')
 
     # Gaussian Copula of data
     covmat = data2gaussian(X)[1]
 
     # To compute using pytorch, we need to compute each order separately
-    for order in range(min_n, n+1):
+    df = []
+    pbar_order = tqdm(range(min_order, max_order+1), leave=False, desc='Order', disable=(min_order==max_order))
+    for order in pbar_order:
 
-        # TODO: ver si puedo cambiar allmin1 por single_exclusion_mask
+        # Calculate constant values valid for all n-plets of the current order
         allmin1 = _all_min_1_ids(order)
         bc1 = _gaussian_entropy_bias_correction(1,T)
         bcN = _gaussian_entropy_bias_correction(order,T)
         bcNmin1 = _gaussian_entropy_bias_correction(order-1,T)
 
+        # Generate dataset iterable
         dataset = CovarianceDataset(covmat, N, order)
-        chunked_linparts_generator = DataLoader(dataset, batch_size=batch_size, num_workers=0)
+        dataloader = DataLoader(
+            dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=1,
+            pin_memory=using_GPU
+        )
 
-        pbar = tqdm(enumerate(chunked_linparts_generator), total=(len(dataset) // batch_size), leave=False)
-        for i, (partition_idxs, partition_covmat) in pbar:
-
-            partition_covmat.to(device)
-
-            pbar.set_description(f'Processing chunk {order} - {i}: computing nplets')
+        # calculate measurments for each batch
+        pbar = tqdm(dataloader, total=len(dataloader), leave=False, desc='Batch')
+        for partition_idxs, partition_covmat in pbar:
+            partition_covmat = partition_covmat.to(device)
             nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
                 partition_covmat, allmin1, bc1, bcN, bcNmin1
             )
 
-            return {
-                'partition_idxs': partition_idxs,
-                'order': order,
-                'nplets_tc': nplets_tc.cpu().numpy(),
-                'nplets_dtc': nplets_dtc.cpu().numpy(),
+            df_batch = pd.DataFrame({
+                'partition_idxs': ['-'.join(map(str, p)) for p in partition_idxs.cpu().numpy()],
+                'order': partition_idxs.shape[1],
                 'nplets_o': nplets_o.cpu().numpy(),
-                'nplets_s': nplets_s.cpu().numpy()
-            }
+            })
+            df.append(df_batch)
 
-'''
-
-util function to save to csv
-
-only_synergestic=False
-output_path='./'
-
-pbar.set_description(f'Saving chunk {i}')
-_save_to_csv(
-    os.path.join(output_path, f'nplets_{order}_{i}.csv'),
-    nplets_tc, nplets_dtc,
-    nplets_o, nplets_s,
-    linparts, psizes,
-    N, only_synergestic=only_synergestic
-)
-'''
+    return pd.concat(df)
