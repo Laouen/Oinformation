@@ -1,9 +1,6 @@
-from typing import Optional, Callable
+from typing import Optional
 
-import os
 from tqdm.autonotebook import tqdm
-
-from concurrent.futures import ThreadPoolExecutor
 
 import scipy as sp
 import numpy as np
