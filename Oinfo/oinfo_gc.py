@@ -3,7 +3,7 @@ from typing import Optional, Callable
 import os
 from tqdm.autonotebook import tqdm
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 import scipy as sp
 import numpy as np
@@ -11,7 +11,9 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
-from .dataset import CovarianceDataset
+import math
+
+from .dataset import CovarianceDataset, CovarianceRangeDataset
 
 
 def data2gaussian(X):
@@ -124,13 +126,44 @@ def nplet_tc_dtc(X: np.ndarray):
         nplet_s.cpu().numpy()[0]
     )
 
+def process_chunk(covmat, order, start, stop, batch_size, using_GPU, device, allmin1, bc1, bcN, bcNmin1):
+
+    dataset = CovarianceRangeDataset(covmat, order, start, stop)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=1,
+        pin_memory=using_GPU
+    )
+
+    # calculate measurments for each batch
+    dfs = []
+    pbar = tqdm(dataloader, total=len(dataloader), leave=False, desc=f'Batch [{start},{stop}]')
+    for partition_idxs, partition_covmat in pbar:
+        partition_covmat = partition_covmat.to(device)
+        nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
+            partition_covmat, allmin1, bc1, bcN, bcNmin1
+        )
+
+        df_batch = pd.DataFrame({
+            'partition_idxs': ['-'.join(map(str, p)) for p in partition_idxs.cpu().numpy()],
+            'order': partition_idxs.shape[1],
+            'nplets_o': nplets_o.cpu().numpy(),
+        })
+        dfs.append(df_batch)
+    
+    return pd.concat(dfs)
+
 
 # TODO: use a collector as parameter with save_to_csv as default
+# TODO: Test this function to see that the multiprocessing is correct.
 def multi_order_meas_gc(X: np.ndarray,
                         min_order: int=3,
                         max_order: Optional[int]=None,
                         batch_size: int = 1000000,
-                        use_cpu: bool = False):
+                        use_cpu: bool = False,
+                        n_jobs: Optional[int] = 8):
     """
     Compute multi-order Gaussian Copula (GC) measurements for the given data matrix X.
 
@@ -159,7 +192,7 @@ def multi_order_meas_gc(X: np.ndarray,
     covmat = data2gaussian(X)[1]
 
     # To compute using pytorch, we need to compute each order separately
-    df = []
+    df_chunks = []
     pbar_order = tqdm(range(min_order, max_order+1), leave=False, desc='Order', disable=(min_order==max_order))
     for order in pbar_order:
 
@@ -169,29 +202,18 @@ def multi_order_meas_gc(X: np.ndarray,
         bcN = _gaussian_entropy_bias_correction(order,T)
         bcNmin1 = _gaussian_entropy_bias_correction(order-1,T)
 
-        # Generate dataset iterable
-        dataset = CovarianceDataset(covmat, N, order)
-        dataloader = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=1,
-            pin_memory=using_GPU
-        )
+        futures = []
+        with ProcessPoolExecutor(max_workers=n_jobs) as executor:
 
-        # calculate measurments for each batch
-        pbar = tqdm(dataloader, total=len(dataloader), leave=False, desc='Batch')
-        for partition_idxs, partition_covmat in pbar:
-            partition_covmat = partition_covmat.to(device)
-            nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
-                partition_covmat, allmin1, bc1, bcN, bcNmin1
-            )
+            total_combinations = math.comb(N, order)
+            chunk_size = total_combinations // n_jobs
+            for start in tqdm(range(0, total_combinations, chunk_size), desc='Submiting Chunks'):
+                stop = min(start + chunk_size, total_combinations)
 
-            df_batch = pd.DataFrame({
-                'partition_idxs': ['-'.join(map(str, p)) for p in partition_idxs.cpu().numpy()],
-                'order': partition_idxs.shape[1],
-                'nplets_o': nplets_o.cpu().numpy(),
-            })
-            df.append(df_batch)
+                future = executor.submit(process_chunk, covmat, order, start, stop, batch_size, using_GPU, device, allmin1, bc1, bcN, bcNmin1)
+                futures.append(future)
 
-    return pd.concat(df)
+            for future in tqdm(futures, leave=False, desc='Chunk results'):
+                df_chunks.append(future.result())
+
+    return pd.concat(df_chunks)
