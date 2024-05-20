@@ -109,14 +109,23 @@ def main(output_path: str, distribution: str, n_repeat: int):
             params = DISTRIBUTION_PARAMS_FUNC[distribution](n_variables)
             real_entropy = ENTROPY_FUNC[distribution](params)
 
-
             for T in tqdm([10**i + 10**(k*i)//2 for i in range(1,7) for k in range(2)], leave=False, desc='n_samples'):
                 X = RANDOM_SAMPLER[distribution](params, T)
 
+                # I use the try and catch because for some very particular casses gcmi can 
+                # have a not positive defined covariance matrix and failes
+                processed = False
+                while(not processed):
+                    try:
+                        npeet_entropy = systems.npeet_entropy(X)
+                        gcmi_entropy = systems.gcmi_entropy(X)
+                        processed = True
+                    except np.linalg.LinAlgError as e:
+                        tqdm.write(f'Error processing random sampler, try again: {e}')
+
                 rows.append([
                     n_variables, T, real_entropy,
-                    systems.npeet_entropy(X),
-                    systems.gcmi_entropy(X)
+                    npeet_entropy, gcmi_entropy
                 ])
     
         pd.DataFrame(

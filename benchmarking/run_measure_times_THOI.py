@@ -1,23 +1,13 @@
 import pandas as pd
 import numpy as np
 import time
-from tqdm import tqdm, trange
+from tqdm import trange
 
 import argparse
 
-from Oinfo import multi_order_meas_gc, multi_order_meas_knn
+from Oinfo import multi_order_meas_gc
 
-ESTIMATORS = {
-    'gc': multi_order_meas_gc,
-    'knn': multi_order_meas_knn
-}
-
-ESTIMATORS_FUNC = {
-    'gc': 'GC',
-    'knn': 'KSG'
-}
-
-def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, estimator, batch_size, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, batch_size, use_cpu, output_path):
 
     """
         T = number of samples
@@ -30,7 +20,6 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
-    multi_order_meas = ESTIMATORS[estimator]
 
     rows = []
     for T in trange(min_T, max_T+1, step_T, leave=False, desc='T'): 
@@ -45,10 +34,10 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
                         continue
 
                     start = time.time()
-                    multi_order_meas(X, order, order, batch_size)
+                    multi_order_meas_gc(X, order, order, batch_size, use_cpu)
                     delta_t = time.time() - start
 
-                    rows.append(['THOI', ESTIMATORS_FUNC[estimator], T, N, batch_size, order, delta_t])
+                    rows.append(['THOI', 'GC', T, N, batch_size, order, delta_t])
 
                     pd.DataFrame(
                         rows,
@@ -70,8 +59,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_bs', type=int, help='Max batch size', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
-    parser.add_argument('--estimator', type=str, choices=['gc', 'knn'])
     parser.add_argument('--batch_size', type=int, default=1000000)
+    parser.add_argument('--use_cpu', default=False, action='store_true', help='Flag to force using CPU instead of GPU even if GPU is available')
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
     args = parser.parse_args()
@@ -81,6 +70,5 @@ if __name__ == '__main__':
         args.min_N, args.step_N, args.max_N,
         args.min_bs, args.step_bs, args.max_bs,
         args.min_order, args.max_order,
-        args.estimator, args.batch_size,
-        args.output_path
+        args.batch_size, args.use_cpu, args.output_path
     )

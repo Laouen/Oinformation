@@ -28,8 +28,7 @@ python run_measure_times_THOI.py \
     --min_T 1000 --step_T 1000 --max_T 10000 \
     --min_N 5 --step_N 5 --max_N 100 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
-    --min_order 3 --max_order 20 \
-    --estimator gc \
+    --min_order 3 --max_order 20  --use_cpu \
     --output_path ./results/times/new_library-thoi_estimator-gc.tsv
 
 python run_measure_times_HOI.py \
@@ -53,9 +52,25 @@ python run_measure_times_GCMI_NPEET.py \
     --library GCMI \
     --output_path ./results/times/library-gcmi_estimator-gc.tsv
 
-python run_measure_times_GCMI_NPEET.py \
+python run_measure_times_GCMI_NPEET.py \python run_measure_times_THOI.py \
+    --min_T 1000 --step_T 1000 --max_T 1001 \
+    --min_N 30 --step_N 5 --max_N 31 \
+    --min_bs 1000000 --step_bs 100000 --max_bs 1000001 \
+    --min_order 3 --max_order 20 \
+    --output_path ./results/times/new_cuda_library-thoi_estimator-gc.tsv
     --min_T 1000 --step_T 100000 --max_T 1000000 \
     --min_N 50 --step_N 5 --max_N 100 \
     --min_order 3 --max_order 20 \
     --library NPEET \
     --output_path ./results/times/library-npeet_estimator-ksg.tsv
+
+
+
+###############
+
+python run_measure_times_THOI.py \
+    --min_T 1000 --step_T 1000 --max_T 1001 \
+    --min_N 30 --step_N 5 --max_N 31 \
+    --min_bs 1000000 --step_bs 100000 --max_bs 1000001 \
+    --min_order 3 --max_order 20 \
+    --output_path ./results/times/new_cuda_library-thoi_estimator-gc.tsv
