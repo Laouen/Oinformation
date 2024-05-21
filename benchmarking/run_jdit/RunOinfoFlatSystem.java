@@ -72,7 +72,7 @@ public class RunOinfoFlatSystem {
 
                         List<String> row = Arrays.asList(
                             RandomSystemsGenerator.getNpletName(nplet),
-                            "JDIT",
+                            "JIDT",
                             String.valueOf(nplet_oinfo),
                             String.valueOf(alpha),
                             String.valueOf(beta),

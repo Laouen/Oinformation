@@ -77,7 +77,7 @@ public class RunMeasureTimesJDIT {
                         long timeElapsed = (finish - start) / 1000; //elapsed time in seconds
 
                         rows.add(Arrays.asList(
-                            "JDIT", "KSG",
+                            "JIDT", "KSG",
                             String.valueOf(T), String.valueOf(N),
                             String.valueOf(order), String.valueOf(timeElapsed)
                         ));

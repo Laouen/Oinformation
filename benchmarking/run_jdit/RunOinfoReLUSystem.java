@@ -66,7 +66,7 @@ public class RunOinfoReLUSystem {
 
                         List<String> row = Arrays.asList(
                             RandomSystemsGenerator.getNpletName(nplet),
-                            "JDIT",
+                            "JIDT",
                             String.valueOf(alpha),
                             String.valueOf(beta),
                             String.valueOf(nplet_oinfo)

@@ -60,7 +60,7 @@ public class RunOinfoXORSystem {
 
                     List<String> row = Arrays.asList(
                         RandomSystemsGenerator.getNpletName(nplet),
-                        "JDIT",
+                        "JIDT",
                         String.valueOf(alpha),
                         String.valueOf(nplet_oinfo)
                     );
