@@ -38,6 +38,7 @@ class systemPartsDataset:
             X_part (np.ndarray): The subset of the data matrix corresponding to the current combination, shape (T, order).
         """
         for part in self.linparts_generator:
+            part = np.array(part)
             yield part, self.X[:,part]
 
 
@@ -59,7 +60,7 @@ def order_o_information(X, order, entropy_func):
     assert order <= N, f"ValueError: order must be lower or equal than N. {order} >= {N}"
 
     single_exclusions_mask = (np.ones((order, order)) - np.eye(order)).astype(bool)
-    all_individual_entropies = np.array([entropy_func(X[:, i]) for i in range(N)])
+    all_individual_entropies = np.array([entropy_func(X[:,[idx]]) for idx in range(N)])
     dataset = systemPartsDataset(X, order)
 
     for (idxs, X) in tqdm(dataset, total=len(dataset), leave=False, desc='n-plet'):
@@ -132,6 +133,6 @@ if __name__ == '__main__':
         args.min_T, args.step_T, args.max_T,
         args.min_N, args.step_N, args.max_N,
         args.min_order, args.max_order,
-        args.estimator,
+        args.library,
         args.output_path
     )

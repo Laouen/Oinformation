@@ -7,7 +7,7 @@ import argparse
 
 from Oinfo import multi_order_meas_gc
 
-def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, batch_size, use_cpu, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, use_cpu, output_path):
 
     """
         T = number of samples
@@ -19,7 +19,6 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
     max_order = min_order if max_order is None else max_order
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
-
 
     rows = []
     for T in trange(min_T, max_T+1, step_T, leave=False, desc='T'): 
@@ -59,7 +58,6 @@ if __name__ == '__main__':
     parser.add_argument('--max_bs', type=int, help='Max batch size', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
-    parser.add_argument('--batch_size', type=int, default=1000000)
     parser.add_argument('--use_cpu', default=False, action='store_true', help='Flag to force using CPU instead of GPU even if GPU is available')
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
@@ -70,5 +68,5 @@ if __name__ == '__main__':
         args.min_N, args.step_N, args.max_N,
         args.min_bs, args.step_bs, args.max_bs,
         args.min_order, args.max_order,
-        args.batch_size, args.use_cpu, args.output_path
+        args.use_cpu, args.output_path
     )

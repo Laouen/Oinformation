@@ -46,14 +46,14 @@ public class RunMeasureTimesJDIT {
         try {
             int min_T = 1000;
             int step_T = 100000;
-            int max_T = 1000000;
+            int max_T = 1001;
 
-            int min_N = 50;
+            int min_N = 30;
             int step_N = 5;
-            int max_N = 100;
+            int max_N = 31;
 
             int min_order = 3;
-            int max_order = 20;
+            int max_order = 30;
 
             String outputPath = args[0];
             String[] columns = {"library", "estimator", "T", "N", "order", "time"};
