@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Callable
 
 from tqdm.autonotebook import tqdm
 
@@ -23,13 +23,13 @@ def data2gaussian(X):
     - X_gaussian_covmat: The covariance matrix of the Gaussian copula transformed data.
     """
 
-    T = np.size(X, axis=0)
-
     assert X.ndim == 2, f'data must be 2D but got {X.ndim}D data input'
 
+    T = X.shape[0]
+
     # Step 1 & 2: Rank the data and normalize the ranks
-    sortid = np.argsort(X,axis=0) # sorting indices
-    copdata = np.argsort(sortid,axis=0) # sorting sorting indices
+    sortid = np.argsort(X, axis=0) # sorting indices
+    copdata = np.argsort(sortid, axis=0) # sorting sorting indices
     copdata = (copdata+1)/(T+1) # normalized indices in the [0,1] range 
 
     # Step 3: Apply the inverse CDF of the standard normal distribution
@@ -122,12 +122,13 @@ def nplet_tc_dtc(X: np.ndarray):
     )
 
 
-# TODO: use a collector as parameter with save_to_csv as default
 def multi_order_meas_gc(X: np.ndarray,
                         min_order: int=3,
                         max_order: Optional[int]=None,
                         batch_size: int = 1000000,
-                        use_cpu: bool = False):
+                        use_cpu: bool = False,
+                        batch_aggregation: Optional[Callable[[any],any]] = None,
+                        batch_data_collector: Optional[Callable[[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],any]] = None):
     """
     Compute multi-order Gaussian Copula (GC) measurements for the given data matrix X.
 
@@ -142,7 +143,13 @@ def multi_order_meas_gc(X: np.ndarray,
         pd.DataFrame: DataFrame containing computed metrics.
     """
 
-    T, N = np.shape(X)
+    if batch_aggregation is None:
+        batch_aggregation = lambda X: [x for x in X if x is not None]
+
+    if batch_data_collector is None:
+        batch_data_collector = lambda x: x
+
+    T, N = X.shape
     max_order = N if max_order is None else max_order
 
     assert max_order <= N, f"max_order must be lower or equal than N. {max_order} > {N})"
@@ -156,7 +163,7 @@ def multi_order_meas_gc(X: np.ndarray,
     covmat = data2gaussian(X)[1]
 
     # To compute using pytorch, we need to compute each order separately
-    df = []
+    batched_data = []
     pbar_order = tqdm(range(min_order, max_order+1), leave=False, desc='Order', disable=(min_order==max_order))
     for order in pbar_order:
 
@@ -178,17 +185,20 @@ def multi_order_meas_gc(X: np.ndarray,
 
         # calculate measurments for each batch
         pbar = tqdm(dataloader, total=len(dataloader), leave=False, desc='Batch')
-        for partition_idxs, partition_covmat in pbar:
+        for bn, (partition_idxs, partition_covmat) in enumerate(pbar):
             partition_covmat = partition_covmat.to(device)
             nplets_tc, nplets_dtc, nplets_o, nplets_s = _get_tc_dtc_from_batched_covmat(
                 partition_covmat, allmin1, bc1, bcN, bcNmin1
             )
 
-            df_batch = pd.DataFrame({
-                'partition_idxs': ['-'.join(map(str, p)) for p in partition_idxs.cpu().numpy()],
-                'order': partition_idxs.shape[1],
-                'nplets_o': nplets_o.cpu().numpy(),
-            })
-            df.append(df_batch)
+            data = batch_data_collector(
+                partition_idxs.cpu().numpy(),
+                nplets_o.cpu().numpy(),
+                nplets_s.cpu().numpy(),
+                nplets_tc.cpu().numpy(),
+                nplets_dtc.cpu().numpy(),
+                bn
+            )
+            batched_data.append(data)
 
-    return pd.concat(df)
+    return batch_aggregation(batched_data)

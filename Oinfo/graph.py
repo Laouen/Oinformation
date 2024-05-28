@@ -5,7 +5,7 @@ from tqdm import tqdm
 import pandas as pd
 
 
-def synergestic_graph(df: pd.DataFrame, N:int, weight_method: str = 'unweighted'):
+def synergestic_graph(df: pd.DataFrame, marker_cols:List[int], weight_method: str = 'unweighted'):
     """
     @bierf: Compute the sinergestic graph to later compute other graph theory metrics
     
@@ -18,17 +18,20 @@ def synergestic_graph(df: pd.DataFrame, N:int, weight_method: str = 'unweighted'
     if weight_method is 'weighted' the weight of the edge is the number of synergestic nplets between the two nodes weighted by the psize column as 2*(1/psize)
     """
 
+    N = len(marker_cols)
+
     # Create the graph of conections were the weight of the node is the number of synergestic nplets
     print('Creating the graph of connections...')
     G = nx.Graph()
     pbar_i = tqdm(range(N))
     for i in pbar_i:
         pbar_i.set_description(f'Node: {i}')
+        G.add_node(i, variable=marker_cols[i])
         #pbar_j = tqdm(range(i+1, N+1), leave=False)
         for j in range(i+1, N):
             #pbar_j.set_description(f'Node: {j}')
 
-            both_in_nplet = (df[str(i)] & df[str(j)]).astype(int).values
+            both_in_nplet = (df[marker_cols[i]] & df[marker_cols[j]]).astype(int).values
 
             # Count the number of nplets in common between the two nodes    
             if weight_method == 'unweighted':
@@ -39,12 +42,12 @@ def synergestic_graph(df: pd.DataFrame, N:int, weight_method: str = 'unweighted'
             elif weight_method == 'weighted':
                 
                 # count n rows where cols i and j are both True weighted by the psize column as 2*(1/psize)
-                psizes = (2/df['psizes']).values
-                weight = np.sum(both_in_nplet * psizes)
+                order = (2/df['order']).values
+                weight = np.sum(both_in_nplet * order)
 
             if weight > 0:
                 G.add_edge(i, j, weight=weight)
-    
+
     return G
 
 
