@@ -4,7 +4,6 @@ from tqdm.autonotebook import tqdm
 
 import scipy as sp
 import numpy as np
-import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
