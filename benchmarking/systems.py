@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from npeet import entropy_estimators as ee
-from Oinfo.oinfo_gc import nplet_tc_dtc
+from thoi.measures.gaussian_copula import nplet_measures
 
 import sys
 import os
@@ -22,7 +22,7 @@ def gcmi_entropy(X:np.ndarray):
 
 
 def o_information_thoi(X:np.ndarray):
-    return nplet_tc_dtc(X)[2]
+    return nplet_measures(X)[2]
 
 
 def generate_flat_system(alpha: float=1.0, beta: float=1.0, gamma: float=1.0, T: int=1000):

@@ -5,7 +5,7 @@ from tqdm import trange
 
 import argparse
 
-from Oinfo import multi_order_meas_gc
+from thoi.measures.gaussian_copula import multi_order_measures
 
 def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, use_cpu, output_path):
 
@@ -33,7 +33,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
                         continue
 
                     start = time.time()
-                    multi_order_meas_gc(X, order, order, batch_size, use_cpu)
+                    multi_order_measures(X, order, order, batch_size, use_cpu)
                     delta_t = time.time() - start
 
                     rows.append(['THOI', 'GC', T, N, batch_size, order, delta_t])

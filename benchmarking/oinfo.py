@@ -30,4 +30,3 @@ def o_information(X: np.ndarray, entropy_func, single_exclusions_mask=None, indi
     single_exclusion_entropies = np.array([entropy_func(X[:,idxs]) for idxs in single_exclusions_mask])
 
     return (N - 2) * system_entropy + (individual_entropies - single_exclusion_entropies).sum()
-

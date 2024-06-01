@@ -2,7 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 import argparse
 
-from Oinfo import o_information
+import oinfo
 import systems
 
 def main(output_path: str, T: int, n_repeat: int):
@@ -46,13 +46,13 @@ def main(output_path: str, T: int, n_repeat: int):
                         rows.append({
                             'n-plet': name,
                             'method': 'NPEET',
-                            'O-information': o_information(X, systems.npeet_entropy)
+                            'O-information': oinfo.o_information(X, systems.npeet_entropy)
                         })
 
                         rows.append({
                             'n-plet': name,
                             'method': 'GCMI',
-                            'O-information': o_information(X, systems.gcmi_entropy)
+                            'O-information': oinfo.o_information(X, systems.gcmi_entropy)
                         })
 
                 df = pd.DataFrame(rows)
