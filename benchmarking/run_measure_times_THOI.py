@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import time
 from tqdm import trange
+import torch
 
 import argparse
 
@@ -20,6 +21,14 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
+    def delete_batch(*args):
+        for arg in args:
+            del arg
+        torch.cuda.empty_cache()
+
+    def empty_cache(arg):
+        torch.cuda.empty_cache()
+
     rows = []
     for T in trange(min_T, max_T+1, step_T, leave=False, desc='T'): 
         for N in trange(min_N, max_N+1, step_N, leave=False, desc='N'):
@@ -33,7 +42,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
                         continue
 
                     start = time.time()
-                    multi_order_measures(X, order, order, batch_size, use_cpu)
+                    multi_order_measures(X, order, order, batch_size, use_cpu, batch_data_collector=delete_batch, batch_aggregation=empty_cache)
                     delta_t = time.time() - start
 
                     rows.append(['THOI', 'GC', T, N, batch_size, order, delta_t])
