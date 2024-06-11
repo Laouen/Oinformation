@@ -7,8 +7,7 @@ from tqdm import tqdm
 
 import argparse
 
-from Oinfo import o_information
-import systems
+from .formulas import o_information, npeet_entropy, gcmi_entropy
 
 
 class systemPartsDataset:
@@ -86,11 +85,11 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, libra
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
 
     if library == 'NPEET':
-        o_estimator = systems.npeet_entropy
+        o_estimator = npeet_entropy
         estimator = 'KSG'
 
     elif library == 'GCMI':
-        o_estimator = systems.gcmi_entropy
+        o_estimator = gcmi_entropy
         estimator = 'GC'
 
     rows = []

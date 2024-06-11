@@ -1,29 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from npeet import entropy_estimators as ee
-from thoi.measures.gaussian_copula import nplet_measures
-
-import sys
-import os
-
-GCMI_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libraries')
-sys.path.append(GCMI_dir)
-
-from gcmi.python import gcmi
-
-
-def npeet_entropy(X:np.ndarray):
-    return ee.entropy(X, base=np.e)
-
-
-def gcmi_entropy(X:np.ndarray):
-    return gcmi.ent_g(gcmi.copnorm(X.T))
-
-
-def o_information_thoi(X:np.ndarray):
-    return nplet_measures(X)[2]
-
 
 def generate_flat_system(alpha: float=1.0, beta: float=1.0, gamma: float=1.0, T: int=1000):
 

@@ -2,8 +2,8 @@ import pandas as pd
 from tqdm import tqdm
 import argparse
 
-import oinfo
 import systems
+import formulas
 
 def main(output_path: str, T: int, n_repeat: int):
 
@@ -15,9 +15,6 @@ def main(output_path: str, T: int, n_repeat: int):
         ['X1','X2','X3','X4', 'X5', 'X6'],
 
         # with synergistic and redundant source
-        #['Z00','Z01','X1','X2','X3'],
-        #['Z00','Z01','X1','X2','X3','X4'],
-        #['Z00','Z01','X1','X2','X3','X4', 'X5'],
         ['Z00','X1','X2','X3','X4', 'X5', 'X6'],
         ['Z01','X1','X2','X3','X4', 'X5', 'X6'],
         ['Z00','Z01','X1','X2','X3','X4', 'X5', 'X6']
@@ -40,19 +37,19 @@ def main(output_path: str, T: int, n_repeat: int):
                         rows.append({
                             'n-plet': name,
                             'method': 'THOI',
-                            'O-information': systems.o_information_thoi(X)
+                            'O-information': formulas.o_information_thoi(X)
                         })
 
                         rows.append({
                             'n-plet': name,
                             'method': 'NPEET',
-                            'O-information': oinfo.o_information(X, systems.npeet_entropy)
+                            'O-information': formulas.o_information(X, formulas.npeet_entropy)
                         })
 
                         rows.append({
                             'n-plet': name,
                             'method': 'GCMI',
-                            'O-information': oinfo.o_information(X, systems.gcmi_entropy)
+                            'O-information': formulas.o_information(X, formulas.gcmi_entropy)
                         })
 
                 df = pd.DataFrame(rows)
