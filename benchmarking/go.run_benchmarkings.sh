@@ -16,7 +16,7 @@ python run_oinfo_xor_system.py --output_path ./results/o_info/system-xor_repeat-
 ### Run entropy estimators analysis ###
 #######################################
 
-python run_estimators_error.py --output_path ./results/estimators/distribution-normal_repeat-20.tsv --distribution normal --n_repeat 20
+python run_estimators_error.py --output_path ./results/estimators/distribution-gaussian_repeat-20.tsv --distribution gaussian --n_repeat 20
 python run_estimators_error.py --output_path ./results/estimators/distribution-uniform_repeat-20.tsv --distribution uniform --n_repeat 20
 python run_estimators_error.py --output_path ./results/estimators/distribution-dirichlet_repeat-20.tsv --distribution dirichlet --n_repeat 20
 
@@ -28,8 +28,8 @@ python run_measure_times_THOI.py \
     --min_T 1000 \
     --min_N 5 --step_N 5 --max_N 30 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
-    --min_order 3 --max_order 30  --use_cpu \
-    --output_path ./results/times/new_library-thoi_estimator-gc.tsv
+    --min_order 3 --max_order 30 --use_cpu \
+    --output_path ./results/times/library-thoi_estimator-gc_device.tsv
 
 python run_measure_times_HOI.py \
     --min_T 1000 --min_N 30 \
@@ -54,4 +54,3 @@ python run_measure_times_GCMI_NPEET.py \
     --min_order 3 --max_order 30 \
     --library NPEET \
     --output_path ./results/times/library-npeet_estimator-ksg.tsv
-
