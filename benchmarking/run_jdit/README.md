@@ -17,3 +17,7 @@ java -cp .:infodynamics.jar RunOinfoXORSystem ../results/o_info/system-xor_repea
 ## RunOinfoFlatSystem
 javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunOinfoFlatSystem.java
 java -cp .:infodynamics.jar RunOinfoFlatSystem ../results/o_info/system-flat_repeat-20_t-10000_JDIT.tsv 0.1
+
+## RunOinfoInSamples
+javac -cp infodynamics.jar TSVWriter.java RunOinfoInSamples.java
+java -cp .:infodynamics.jar RunOinfoInSamples /home/laouen.belloli/Downloads/samples /home/laouen.belloli/Downloads/samples/results.tsv
