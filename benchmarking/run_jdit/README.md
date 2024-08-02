@@ -20,4 +20,4 @@ java -cp .:infodynamics.jar RunOinfoFlatSystem ../results/o_info/system-flat_rep
 
 ## RunOinfoInSamples
 javac -cp infodynamics.jar TSVWriter.java RunOinfoInSamples.java
-java -cp .:infodynamics.jar RunOinfoInSamples /home/laouen.belloli/Downloads/samples /home/laouen.belloli/Downloads/samples/results.tsv
+java -cp .:infodynamics.jar RunOinfoInSamples /home/laouen.belloli/Documents/data/PGM_data /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/pgm/results_jidt.tsv

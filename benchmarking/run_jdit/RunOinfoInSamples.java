@@ -1,4 +1,7 @@
 import infodynamics.measures.continuous.kraskov.OInfoCalculatorKraskov;
+import infodynamics.measures.continuous.kraskov.MultiInfoCalculatorKraskov1;
+import infodynamics.measures.continuous.kraskov.DualTotalCorrelationCalculatorKraskov;
+import infodynamics.measures.continuous.kraskov.SInfoCalculatorKraskov;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,16 +18,25 @@ public class RunOinfoInSamples {
             String outputPath = args[1];
             int windowSize = 10000;
             
-            String[] columns = {"distribution", "alpha", "window", "O-information"};
+            String[] columns = {
+                "distribution", "alpha", "window",
+                "O-information",
+                "Total Correlation",
+                "Dual Total Correlation",
+                "S-information"
+            };
 
             System.out.println("Parameter: ");
             System.out.println("outputPath: " + outputPath);
             System.out.println("numpyFilesDir: " + numpyFilesDir);
             System.out.println("windowSize: " + windowSize);
 
-            //String[] systems = {"db", "db1", "db2"}; 
-            //String[] systems = {"hh_normal","tt_normal","hh_beta","tt_beta","hh_exp","tt_exp","hh_uniform","tt_uniform","db"};
-            String[] systems = {"joint_beta","joint_exp","joint_uniform"};
+            String[] systems = {
+                "hh_normal",    "tt_normal",    "joint_normal",
+                "hh_beta",      "tt_beta",      "joint_beta",
+                "hh_exp",       "tt_exp",       "joint_exp",
+                "hh_uniform",   "tt_uniform",   "joint_uniform"
+            };
             String[] alphas = {"0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"};
 
             List<List<String>> rows = new ArrayList<List<String>>();
@@ -76,11 +88,32 @@ public class RunOinfoInSamples {
                         oInfoCalc.setObservations(windowData);
                         double oinfo_val = oInfoCalc.computeAverageLocalOfObservations();
 
+                        // Compute the TC using the MultiInfoCalculatorKraskov1
+                        MultiInfoCalculatorKraskov1 tcCalc = new MultiInfoCalculatorKraskov1();
+                        tcCalc.initialise(nVariables);
+                        tcCalc.setObservations(windowData);
+                        double tc_val = tcCalc.computeAverageLocalOfObservations();
+
+                        // Compute the DTC using the DualTotalCorrelationCalculatorKraskov
+                        DualTotalCorrelationCalculatorKraskov dtcCalc = new DualTotalCorrelationCalculatorKraskov();
+                        dtcCalc.initialise(nVariables);
+                        dtcCalc.setObservations(windowData);
+                        double dtc_val = dtcCalc.computeAverageLocalOfObservations();
+
+                        // Compute the S-information using the SInfoCalculatorKraskov
+                        SInfoCalculatorKraskov sinfoCalc = new SInfoCalculatorKraskov();
+                        sinfoCalc.initialise(nVariables);
+                        sinfoCalc.setObservations(windowData);
+                        double sinfo_val = sinfoCalc.computeAverageLocalOfObservations();
+
                         List<String> row = new ArrayList<String>();
                         row.add(systems[s]);
                         row.add(alphas[a]);
                         row.add(Integer.toString(w));
                         row.add(Double.toString(oinfo_val));
+                        row.add(Double.toString(tc_val));
+                        row.add(Double.toString(dtc_val));
+                        row.add(Double.toString(sinfo_val));
                         rows.add(row);
                     }
                 }

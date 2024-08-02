@@ -5,7 +5,7 @@ import os
 
 def split_db(file_paths):
 
-    for distribution in ["beta","exp","uniform"]:
+    for distribution in ["normal","beta","exp","uniform"]:
         for alpha in ["0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"]:
             data_hh = pd.read_csv(os.path.join(file_paths, f'hh_{distribution}_alpha-{alpha}.csv'), sep=',', header=None)
             data_tt = pd.read_csv(os.path.join(file_paths, f'tt_{distribution}_alpha-{alpha}.csv'), sep=',', header=None)
