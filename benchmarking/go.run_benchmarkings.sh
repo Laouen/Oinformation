@@ -54,3 +54,12 @@ python run_measure_times_GCMI_NPEET.py \
     --min_order 3 --max_order 30 \
     --library NPEET \
     --output_path ./results/times/library-npeet_estimator-ksg.tsv
+
+
+########################################################
+#### Run computation time per sample size analysis #####
+########################################################
+
+python run_oino_time_by_sample_size.py \
+    --files_dir /home/laouen.belloli/Documents/data/Oinfo/random_sample_sizes \
+    --output_path /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/times/by_sample_size_library-thoi.tsv 

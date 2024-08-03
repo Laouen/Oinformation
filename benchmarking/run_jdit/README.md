@@ -18,6 +18,10 @@ java -cp .:infodynamics.jar RunOinfoXORSystem ../results/o_info/system-xor_repea
 javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunOinfoFlatSystem.java
 java -cp .:infodynamics.jar RunOinfoFlatSystem ../results/o_info/system-flat_repeat-20_t-10000_JDIT.tsv 0.1
 
-## RunOinfoInSamples
-javac -cp infodynamics.jar TSVWriter.java RunOinfoInSamples.java
-java -cp .:infodynamics.jar RunOinfoInSamples /home/laouen.belloli/Documents/data/PGM_data /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/pgm/results_jidt.tsv
+## RunMeasuresInSamples
+javac -cp infodynamics.jar TSVWriter.java CSVReader.java RunMeasuresInSamples.java
+java -cp .:infodynamics.jar RunMeasuresInSamples /home/laouen.belloli/Documents/data/Oinfo/PGM_data /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/pgm/pgm_results_jidt.tsv
+
+## RunOinfoTimeBySampleSize.java
+javac -cp infodynamics.jar TSVWriter.java CSVReader.java RunOinfoTimeBySampleSize.java
+java -cp .:infodynamics.jar RunOinfoTimeBySampleSize /home/laouen.belloli/Documents/data/Oinfo/random_sample_sizes /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/times/by_sample_size_library-jidt.tsv
