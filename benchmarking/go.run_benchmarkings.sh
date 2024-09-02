@@ -28,8 +28,33 @@ python run_measure_times_THOI.py \
     --min_T 1000 \
     --min_N 5 --step_N 5 --max_N 30 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
-    --min_order 3 --max_order 30 --use_cpu \
-    --output_path ./results/times/library-thoi_estimator-gc_device.tsv
+    --min_order 3 --max_order 30 \
+    --indexing_method indexes --use_cpu \
+    --output_path ./results/times/library-thoi_estimator-gc_device-cpu_indexing-indexes.tsv
+
+python run_measure_times_THOI.py \
+    --min_T 1000 \
+    --min_N 5 --step_N 5 --max_N 30 \
+    --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
+    --min_order 3 --max_order 30 \
+    --indexing_method hot_encoded --use_cpu \
+    --output_path ./results/times/library-thoi_estimator-gc_device-cpu_indexing-hotencoded.tsv
+
+python run_measure_times_THOI.py \
+    --min_T 1000 \
+    --min_N 5 --step_N 5 --max_N 30 \
+    --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
+    --min_order 3 --max_order 30 \
+    --indexing_method indexes \
+    --output_path ./results/times/library-thoi_estimator-gc_device-cuda_indexing-indexes.tsv
+
+python run_measure_times_THOI.py \
+    --min_T 1000 \
+    --min_N 5 --step_N 5 --max_N 30 \
+    --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
+    --min_order 3 --max_order 30 \
+    --indexing_method hot_encoded \
+    --output_path ./results/times/library-thoi_estimator-gc_device-cuda_indexing-hotencoded.tsv
 
 python run_measure_times_HOI.py \
     --min_T 1000 --min_N 30 \

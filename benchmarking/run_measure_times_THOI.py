@@ -7,13 +7,16 @@ import torch
 import argparse
 
 from thoi.measures.gaussian_copula import multi_order_measures
+from thoi.measures.gaussian_copula_hot_encoded import multi_order_measures_hot_encoded
 
-def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, use_cpu, output_path):
+def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, min_order, max_order, indexing_method, use_cpu, output_path):
 
     """
         T = number of samples
         N = number of features
     """
+    
+    multi_order_measures_func = multi_order_measures if indexing_method == 'indexes' else multi_order_measures_hot_encoded
 
     max_T = min_T if max_T is None else max_T
     max_N = min_N if max_N is None else max_N
@@ -42,7 +45,12 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
                         continue
 
                     start = time.time()
-                    multi_order_measures(X, order, order, batch_size, use_cpu, batch_data_collector=delete_batch, batch_aggregation=empty_cache)
+                    multi_order_measures_func(
+                        X, min_order=order, max_order=order,
+                        batch_size=batch_size, use_cpu=use_cpu,
+                        batch_data_collector=delete_batch,
+                        batch_aggregation=empty_cache
+                    )
                     delta_t = time.time() - start
 
                     rows.append(['THOI', 'GC', T, N, batch_size, order, delta_t])
@@ -67,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_bs', type=int, help='Max batch size', default=None)
     parser.add_argument('--min_order', type=int, help='Min size of the n-plets')
     parser.add_argument('--max_order', type=int, help='Max size of the n-plets', default=None)
+    parser.add_argument('--indexing_method', default='indexes', help='Indexing method to use. hot_encoded or indexes')
     parser.add_argument('--use_cpu', default=False, action='store_true', help='Flag to force using CPU instead of GPU even if GPU is available')
     parser.add_argument('--output_path', type=str, help='Path of the .tsv file where to store the results')
 
@@ -77,5 +86,5 @@ if __name__ == '__main__':
         args.min_N, args.step_N, args.max_N,
         args.min_bs, args.step_bs, args.max_bs,
         args.min_order, args.max_order,
-        args.use_cpu, args.output_path
+        args.indexing_method, args.use_cpu, args.output_path
     )
