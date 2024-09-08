@@ -25,7 +25,7 @@ def main(path_covariance_matrix: str, output_path: str):
     for step_size in tqdm([1, 2, 3, 4, 5], desc='step_size'):
         
         best_solution, best_energy = simulated_annealing_multi_order(
-            X, repeat=1000, max_iterations=10,
+            X, repeat=1000, max_iterations=1000,
             step_size=step_size,
             use_cpu=True
         )
