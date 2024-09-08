@@ -13,6 +13,14 @@ python run_oinfo_relu_system.py --output_path ./results/o_info/system-relu_pow-1
 python run_oinfo_xor_system.py --output_path ./results/o_info/system-xor_repeat-20_t-10000.tsv --n_repeat 20 --T 10000
 
 #######################################
+####    Run Simulated Annealing    ####
+#######################################
+
+python run_simulated_annealing_multi_order.py \
+    --path_covariance_matrix /home/laouen.belloli/Documents/data/Oinfo/tt_hh/N-100_example_covmat.npy \
+    --output_path ./results/simulated_annealing
+
+#######################################
 ### Run entropy estimators analysis ###
 #######################################
 
@@ -34,7 +42,7 @@ python run_measure_times_THOI.py \
 
 python run_measure_times_THOI.py \
     --min_T 1000 \
-    --min_N 5 --step_N 5 --max_N 30 \
+    --min_N 30 --step_N 5 --max_N 31 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
     --min_order 3 --max_order 30 \
     --indexing_method hot_encoded --use_cpu \

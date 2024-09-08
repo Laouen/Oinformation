@@ -23,7 +23,9 @@ public class RunOinfoReLUSystem {
             String[][] npletas = {
                 {"X1", "X2", "Z_syn", "Z_red"},
                 {"X1", "X2", "Z_syn"},
-                {"X1", "X2", "Z_red"}
+                {"X1", "X2", "Z_red"},
+                {"X1", "Z_red", "Z_syn"},
+                {"X2", "Z_red", "Z_syn"}
             };
             double[] alphaValues = {
                 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0

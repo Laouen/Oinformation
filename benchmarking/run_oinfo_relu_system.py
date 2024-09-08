@@ -11,6 +11,8 @@ def main(output_path: str, pow_factor: float, T: int, n_repeat: int):
         ['X1','X2','Z_syn','Z_red'],
         ['X1','X2','Z_syn'],
         ['X1','X2','Z_red'],
+        ['X1','Z_red','Z_syn'],
+        ['X2','Z_red','Z_syn']
     ]
 
     value_range = [

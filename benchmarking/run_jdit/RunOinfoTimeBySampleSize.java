@@ -52,7 +52,7 @@ public class RunOinfoTimeBySampleSize {
                     double oinfo_val = oInfoCalc.computeAverageLocalOfObservations();
 
                     long end = System.currentTimeMillis();
-                    long timeElapsed = (end - start); //elapsed time in millseconds
+                    double timeElapsed = (double)(end - start) / 1000.0; //elapsed time in seconds
 
                     List<String> row = new ArrayList<String>();
                     row.add(Integer.toString(totalSamples));
