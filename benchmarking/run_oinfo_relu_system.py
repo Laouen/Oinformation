@@ -1,9 +1,10 @@
 import pandas as pd
 from tqdm import tqdm
 import argparse
+import torch
 
-import formulas
-import systems
+from formulas import o_information_thoi
+from  systems import generate_relu_sistem
 
 def main(output_path: str, pow_factor: float, T: int, n_repeat: int):
 
@@ -21,42 +22,44 @@ def main(output_path: str, pow_factor: float, T: int, n_repeat: int):
 
     dfs = []
     for alpha in tqdm(value_range, leave=False, desc='alpha'):
-        for beta in tqdm(value_range, leave=False, desc='beta'):        
-            rows = []
-            for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
-                data = systems.generate_relu_sistem(alpha=alpha, beta=beta, pow_factor=pow_factor, T=T)
+        beta = 1 - alpha
+        #for beta in tqdm(value_range, leave=False, desc='beta'):        
+        rows = []
+        for _ in tqdm(range(n_repeat), leave=False, desc='repet'):
+            data = generate_relu_sistem(alpha=alpha, beta=beta, pow_factor=pow_factor, T=T)
+            for nplet in tqdm(nplets, leave=False, desc='nplet'):
+                name = '-'.join(nplet)
 
-                for nplet in tqdm(nplets, leave=False, desc='nplet'):
-                    name = '-'.join(nplet)
+                # (n_samples, n_variables)
+                X = data[nplet].values
 
-                    # (n_samples, n_variables)
-                    X = data[nplet].values
+                rows.append({
+                    'n-plet': name,
+                    'method': 'THOI',
+                    'O-information': o_information_thoi(X)
+                })
 
-                    rows.append({
-                        'n-plet': name,
-                        'method': 'THOI',
-                        'O-information': formulas.o_information_thoi(X)
-                    })
+                '''
+                rows.append({
+                    'n-plet': name,
+                    'method': 'NPEET',
+                    'O-information': formulas.o_information(X, formulas.npeet_entropy)
+                })
 
-                    rows.append({
-                        'n-plet': name,
-                        'method': 'NPEET',
-                        'O-information': formulas.o_information(X, formulas.npeet_entropy)
-                    })
+                rows.append({
+                    'n-plet': name,
+                    'method': 'GCMI',
+                    'O-information': formulas.o_information(X, formulas.gcmi_entropy)
+                })
+                '''
 
-                    rows.append({
-                        'n-plet': name,
-                        'method': 'GCMI',
-                        'O-information': formulas.o_information(X, formulas.gcmi_entropy)
-                    })
+        df = pd.DataFrame(rows)
+        df = df.groupby(['n-plet', 'method']).mean().reset_index()
+        df['alpha'] = alpha
+        df['beta'] = beta
 
-            df = pd.DataFrame(rows)
-            df = df.groupby(['n-plet', 'method']).mean().reset_index()
-            df['alpha'] = alpha
-            df['beta'] = beta
-
-            dfs.append(df)
-            pd.concat(dfs).to_csv(output_path, sep='\t', index=False)
+        dfs.append(df)
+        pd.concat(dfs).to_csv(output_path, sep='\t', index=False)
 
 
 if __name__ == '__main__':

@@ -10,13 +10,13 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="141.83466mm"
-   height="69.688812mm"
-   viewBox="0 0 141.83466 69.688812"
+   width="124.50283mm"
+   height="50.747143mm"
+   viewBox="0 0 124.50283 50.747143"
    version="1.1"
    id="svg8"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="fig6_simulated_annealing_multi_order.svg">
+   sodipodi:docname="fig7_simulated_annealing_multi_order.svg">
   <defs
      id="defs2">
     <clipPath
@@ -892,8 +892,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.7677967"
-     inkscape:cx="276.83604"
-     inkscape:cy="150.41288"
+     inkscape:cx="154.82298"
+     inkscape:cy="110.35489"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -902,10 +902,10 @@
      inkscape:window-x="0"
      inkscape:window-y="40"
      inkscape:window-maximized="1"
-     fit-margin-left="10"
-     fit-margin-top="10"
-     fit-margin-right="10"
-     fit-margin-bottom="10"
+     fit-margin-left="0"
+     fit-margin-top="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
      showguides="true"
      inkscape:guide-bbox="true" />
   <metadata
@@ -916,7 +916,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -924,7 +924,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(6.9710137,7.9859185)">
+     transform="translate(-0.46665124,-0.95574806)">
     <g
        transform="matrix(0.13219907,0,0,-0.13219907,64.05215,49.155542)"
        inkscape:label="best_oinfos_dists"
@@ -4436,14 +4436,14 @@
          id="tspan5857"
          x="0.41704187"
          y="6.4829335"
-         style="font-weight:bold;font-size:6.3499999px;stroke-width:0.26458332">A</tspan></text>
+         style="font-weight:normal;font-size:6.3499999px;stroke-width:0.26458332">A</tspan></text>
     <text
        id="text5863"
        y="5.5849228"
        x="61.48175"
        style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1000;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        xml:space="preserve"><tspan
-         style="font-weight:bold;font-size:6.3499999px;stroke-width:0.26458332"
+         style="font-weight:normal;font-size:6.3499999px;stroke-width:0.26458332"
          y="5.5849228"
          x="61.48175"
          id="tspan5861"

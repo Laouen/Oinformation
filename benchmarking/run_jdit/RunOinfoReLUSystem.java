@@ -35,48 +35,51 @@ public class RunOinfoReLUSystem {
             List<List<String>> rows = new ArrayList<List<String>>();
             
             for (double alpha : alphaValues) {
-                for (double beta : betaValues) {
+                //for (double beta : betaValues) {
+                double beta = 1 - alpha;
+                // round beta to 2 decimal places
+                beta = Math.round(beta * 100.0) / 100.0;
                     
-                    System.out.println("Processing alpha=" + alpha + ", beta=" + beta);
+                System.out.println("Processing alpha=" + alpha + ", beta=" + beta);
 
-                    double[][] npletOInfos = new double[npletas.length][nRepeat];
-                    for (int j = 0; j < nRepeat; j++) {
+                double[][] npletOInfos = new double[npletas.length][nRepeat];
+                for (int j = 0; j < nRepeat; j++) {
 
-                        // Generate random system
-                        RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateReLUSystem(alpha, beta, powFactorValue, T);
-                        for(int i = 0; i < npletas.length; i++) {
-
-                            String[] nplet = npletas[i];
-
-                            // Extract data from the desired nplet
-                            double[][] data = system.getNPletData(nplet);
-
-                            // Compute O-information
-                            OInfoCalculatorKraskov oInfoCalc = new OInfoCalculatorKraskov();
-                            oInfoCalc.initialise(data[0].length);
-                            oInfoCalc.setObservations(data);
-                            npletOInfos[i][j] = oInfoCalc.computeAverageLocalOfObservations();
-                        }
-                    }
-
-                    // Save final repeat resuls into the 
-                    for (int i = 0; i < npletas.length; i++) {
+                    // Generate random system
+                    RandomSystemsGenerator.RandomSystem<String> system = RandomSystemsGenerator.generateReLUSystem(alpha, beta, powFactorValue, T);
+                    for(int i = 0; i < npletas.length; i++) {
 
                         String[] nplet = npletas[i];
 
-                        double nplet_oinfo = Arrays.stream(npletOInfos[i]).average().getAsDouble();
+                        // Extract data from the desired nplet
+                        double[][] data = system.getNPletData(nplet);
 
-                        List<String> row = Arrays.asList(
-                            RandomSystemsGenerator.getNpletName(nplet),
-                            "JIDT",
-                            String.valueOf(alpha),
-                            String.valueOf(beta),
-                            String.valueOf(nplet_oinfo)
-                        );
-
-                        rows.add(row);
+                        // Compute O-information
+                        OInfoCalculatorKraskov oInfoCalc = new OInfoCalculatorKraskov();
+                        oInfoCalc.initialise(data[0].length);
+                        oInfoCalc.setObservations(data);
+                        npletOInfos[i][j] = oInfoCalc.computeAverageLocalOfObservations();
                     }
                 }
+
+                // Save final repeat resuls into the 
+                for (int i = 0; i < npletas.length; i++) {
+
+                    String[] nplet = npletas[i];
+
+                    double nplet_oinfo = Arrays.stream(npletOInfos[i]).average().getAsDouble();
+
+                    List<String> row = Arrays.asList(
+                        RandomSystemsGenerator.getNpletName(nplet),
+                        "JIDT",
+                        String.valueOf(alpha),
+                        String.valueOf(beta),
+                        String.valueOf(nplet_oinfo)
+                    );
+
+                    rows.add(row);
+                }
+                //}
             }
 
             TSVWriter.writeToTSV(rows, outputPath, columns);
