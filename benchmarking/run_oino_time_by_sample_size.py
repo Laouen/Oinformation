@@ -4,7 +4,7 @@ import os
 import time
 from glob import glob
 from argparse import ArgumentParser
-from thoi.measures.utils import gaussian_copula
+from thoi.commons import gaussian_copula
 from tqdm import tqdm
 
 from thoi.measures.gaussian_copula import nplets_measures

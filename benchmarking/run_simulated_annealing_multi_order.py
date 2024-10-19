@@ -17,10 +17,10 @@ def main(path_covariance_matrix: str, output_path: str):
     X = np.random.multivariate_normal(np.zeros(N), covmat, T)
     
     n = N // 5
-    npletas_sub_sistemas = np.stack([np.arange(i, i+n) for i in range(0, N, n)])
-    measures_sub_systems = nplets_measures(X, npletas_sub_sistemas)
+    npletas_subsystems = np.stack([np.arange(i, i+n) for i in range(0, N, n)])
+    measures_subsystems = nplets_measures(X, nplets=npletas_subsystems)
     
-    np.save(f'{output_path}/measures_sub_systems.npy', measures_sub_systems)
+    np.save(f'{output_path}/measures_sub_systems.npy', measures_subsystems)
 
     for step_size in tqdm([1, 2, 3, 4, 5], desc='step_size'):
         
