@@ -27,7 +27,7 @@ def main(path_covariance_matrix: str, output_path: str):
         best_solution, best_energy = simulated_annealing_multi_order(
             X, repeat=1000, max_iterations=1000,
             step_size=step_size,
-            use_cpu=True
+            device=True
         )
         
         # save best solution to a numpy file

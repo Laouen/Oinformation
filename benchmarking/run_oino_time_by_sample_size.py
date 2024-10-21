@@ -30,7 +30,7 @@ def main(files_dir: str, output_path: str):
             gc_time = time.time() - start_time
     
             start_time = time.time()
-            nplets_measures(X, nplet, use_cpu=True)
+            nplets_measures(X, nplet, device=True)
             nplets_time = time.time() - start_time
 
             rows.append([T, i, gc_time, nplets_time])

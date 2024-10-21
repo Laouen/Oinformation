@@ -42,7 +42,7 @@ python run_estimators_error.py --output_path ./results/estimators/distribution-d
 
 python run_measure_times_THOI.py \
     --min_T 1000 \
-    --min_N 5 --step_N 5 --max_N 30 \
+    --min_N 30 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
     --min_order 3 --max_order 30 \
     --indexing_method indexes --use_cpu \
@@ -50,7 +50,7 @@ python run_measure_times_THOI.py \
 
 python run_measure_times_THOI.py \
     --min_T 1000 \
-    --min_N 30 --step_N 5 --max_N 31 \
+    --min_N 30 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
     --min_order 3 --max_order 30 \
     --indexing_method hot_encoded --use_cpu \
@@ -58,7 +58,7 @@ python run_measure_times_THOI.py \
 
 python run_measure_times_THOI.py \
     --min_T 1000 \
-    --min_N 5 --step_N 5 --max_N 30 \
+    --min_N 5 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
     --min_order 3 --max_order 30 \
     --indexing_method indexes \
@@ -66,7 +66,7 @@ python run_measure_times_THOI.py \
 
 python run_measure_times_THOI.py \
     --min_T 1000 \
-    --min_N 5 --step_N 5 --max_N 30 \
+    --min_N 5 \
     --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
     --min_order 3 --max_order 30 \
     --indexing_method hot_encoded \
@@ -127,3 +127,11 @@ python run_measure_times_THOI.py \
     --min_order 3 --max_order 30 \
     --indexing_method hot_encoded --use_cpu \
     --output_path ./results/times/library-thoi_estimator-gc_device-cpu_indexing-hotencoded_new2.tsv
+
+
+
+############### RUN ANESTHESIA ####################
+
+python run_anesthesia.py \
+    --input_path /home/laouen.belloli/Documents/data/Oinfo/fmri_anesthesia/42003_2023_5063_MOESM3_ESM/nets_by_subject \
+    --output_path ./results/anesthesia/

@@ -20,6 +20,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
 
     max_T = min_T if max_T is None else max_T
     max_N = min_N if max_N is None else max_N
+    max_bs = min_bs if max_bs is None else max_bs
     max_order = min_order if max_order is None else max_order
 
     assert min_order <= max_order, f'min_order must be <= max_order. {min_order} > {max_order}'
