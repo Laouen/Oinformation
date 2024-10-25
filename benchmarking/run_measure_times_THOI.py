@@ -44,11 +44,13 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
 
                     if order >= N:
                         continue
+                    
+                    device = torch.device('cuda' if torch.cuda.is_available() and not use_cpu else 'cpu')
 
                     start = time.time()
                     multi_order_measures_func(
                         X, min_order=order, max_order=order,
-                        batch_size=batch_size, use_cpu=use_cpu,
+                        batch_size=batch_size, device=device,
                         batch_data_collector=delete_batch,
                         batch_aggregation=empty_cache
                     )

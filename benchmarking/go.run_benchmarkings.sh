@@ -40,10 +40,11 @@ python run_estimators_error.py --output_path ./results/estimators/distribution-d
 #### Run computation time analysis ####
 #######################################
 
+#--min_bs 100000 --step_bs 100000 --max_bs 1000000 \
 python run_measure_times_THOI.py \
     --min_T 1000 \
     --min_N 30 \
-    --min_bs 100000 --step_bs 100000 --max_bs 1000000 \
+    --min_bs 10000 --step_bs 10000 --max_bs 100000 \
     --min_order 3 --max_order 30 \
     --indexing_method indexes --use_cpu \
     --output_path ./results/times/library-thoi_estimator-gc_device-cpu_indexing-indexes.tsv
