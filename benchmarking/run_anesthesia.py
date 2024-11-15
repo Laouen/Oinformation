@@ -16,17 +16,47 @@ import torch
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import roc_auc_score
+import pingouin as pg
+
 
 import time
+
+def effect_size(batched_res: torch.Tensor, metric:str='o'):
+    '''
+    Get the effect size of the groups from the batched results.
+
+    params:
+    - batched_res (np.ndarray): The batched results with shape (batch_size, D, 4) where 4 is the number of metrics (tc, dtc, o, s). D = 2*n_subjects where [0, D/2) are from the group 1 and [D/2, D) are from the group 2.
+    - metric (str): The metric to test the difference. One of tc, dtc, o or s
+    '''
+    
+    METRICS = ['tc', 'dtc', 'o', 's']
+    metric_idx = METRICS.index(metric)
+    
+    batch_size, D = batched_res.shape[:2]
+    
+    # |batch_size| x |D/2|
+    group1 = batched_res[:, :D//2, metric_idx]
+    group2 = batched_res[:, D//2:, metric_idx]
+    
+    # for each batch item compute the wilcoxon test
+    # |batch_size|
+    # groups are ordererd as group2, group1 to get positive effect size when group2 is greater than group1
+    effect_size = torch.tensor([
+        pg.compute_effsize(group2[i].cpu().numpy(), group1[i].cpu().numpy(), paired=True, eftype='cohen')
+        for i in range(batch_size)
+    ])
+    
+    # make absolute the effect size
+    return effect_size
+    
 
 def wilcoxon_metric(batched_res: torch.Tensor, metric:str='o'):
     
     '''
-    Get the metric from the batched results returning the average over the D axis.
+    Get the wilcoxon pvalue of the droups differences from the batched results.
 
     params:
     - batched_res (np.ndarray): The batched results with shape (batch_size, D, 4) where 4 is the number of metrics (tc, dtc, o, s). D = 2*n_subjects where [0, D/2) are from the group 1 and [D/2, D) are from the group 2.
@@ -54,7 +84,7 @@ def wilcoxon_metric(batched_res: torch.Tensor, metric:str='o'):
 def auc_metric(batched_res: torch.Tensor, metric:str='o'):
     
     '''
-    Get the metric from the batched results returning the average over the D axis.
+    Get the roc auc score of the droups differences from the batched results.
 
     params:
     - batched_res (np.ndarray): The batched results with shape (batch_size, D, 4) where 4 is the number of metrics (tc, dtc, o, s). D = 2*n_subjects where [0, D/2) are from the group 1 and [D/2, D) are from the group 2.
@@ -71,12 +101,15 @@ def auc_metric(batched_res: torch.Tensor, metric:str='o'):
     y = np.concatenate([np.zeros(n_subjects), np.ones(n_subjects)])
     
     # Prepare the output
-    return torch.tensor([roc_auc_score(y, X) for X in batched_X])
+    total_auc = torch.tensor([roc_auc_score(y, X) for X in batched_X])
+    
+    # get absolute distance from 0.5
+    return total_auc - 0.5
 
 def cross_val_ml_metric(batched_res: torch.Tensor, metric:str='o', classifier=None):
     
     '''
-    Get the metric from the batched results returning the average over the D axis.
+    Get the classification (logistic regression as default) score of the droups differences from the batched results.
 
     params:
     - batched_res (np.ndarray): The batched results with shape (batch_size, D, 4) where 4 is the number of metrics (tc, dtc, o, s). D = 2*n_subjects where [0, D/2) are from the group 1 and [D/2, D) are from the group 2.
@@ -182,23 +215,29 @@ def read(data_dir: str):
         for sub in sorted(df['sub'].unique())
     ]
 
-    print(networks)
-
     return df, Xs
 
-def run_greedy_roc_auc(Xs, root):
-    nplets, scores = greedy(Xs, repeat=50, metric=auc_metric, largest=True)
+def run_greedy_roc_auc(Xs, root, func_name, largest):
+    
+    func = effect_size if func_name == 'effect_size' else auc_metric
+    
+    print('Running greedy')
+    nplets, scores = greedy(Xs, repeat=50, metric=func, largest=largest)
     
     # save the results as npy files
-    np.save(os.path.join(root, 'nplets_greedy_roc_auc.npy'), nplets.numpy())
-    np.save(os.path.join(root, 'scores_greedy_roc_auc.npy'), scores.numpy())
+    np.save(os.path.join(root, f'nplets_greedy_{func_name}_{"max" if largest else "min"}.npy'), nplets.numpy())
+    np.save(os.path.join(root, f'scores_greedy_{func_name}_{"max" if largest else "min"}.npy'), scores.numpy())
 
-def run_annealing_roc_auc(Xs, root):
-    nplets, scores = simulated_annealing_multi_order(Xs, repeat=50, metric=auc_metric, largest=True)
-    
+def run_annealing_roc_auc(Xs, root, func_name, largest):
+
+    func = effect_size if func_name == 'effect_size' else auc_metric
+
+    print('Running annealing')
+    nplets, scores = simulated_annealing_multi_order(Xs, repeat=50, metric=func, largest=largest)
+
     # save the results as npy files
-    np.save(os.path.join(root, 'nplets_annealing_roc_auc.npy'), nplets.numpy())
-    np.save(os.path.join(root, 'scores_annealing_roc_auc.npy'), scores.numpy())
+    np.save(os.path.join(root, f'nplets_annealing_{func_name}_{"max" if largest else "min"}.npy'), nplets.numpy())
+    np.save(os.path.join(root, f'scores_annealing_{func_name}_{"max" if largest else "min"}.npy'), scores.numpy())
     
 def run_wale(Xs, root):
     Xs_awake = Xs[:16]
@@ -228,6 +267,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--output_path', type=str)
     parser.add_argument('--input_path', type=str)
+    parser.add_argument('--func', type=str, default='effect_size')
     
     args = parser.parse_args()
     
@@ -235,9 +275,10 @@ if __name__ == '__main__':
     
     Path(args.output_path).mkdir(parents=True, exist_ok=True)
     
-    
-    run_greedy_roc_auc(Xs, args.output_path)
-    run_annealing_roc_auc(Xs, args.output_path)
-    run_wale(Xs, args.output_path)
+    run_greedy_roc_auc(Xs, args.output_path, args.func, True)
+    run_greedy_roc_auc(Xs, args.output_path, args.func, False)
+    run_annealing_roc_auc(Xs, args.output_path, args.func, True)
+    run_annealing_roc_auc(Xs, args.output_path, args.func, False)
+    #run_wale(Xs, args.output_path)
     
     print('FINISHED')

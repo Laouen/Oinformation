@@ -2,11 +2,12 @@ from argparse import ArgumentParser
 import numpy as np
 from pathlib import Path
 from tqdm import tqdm
+import torch
 
 from thoi.heuristics.simulated_annealing_multi_order import simulated_annealing_multi_order
 from thoi.measures.gaussian_copula import nplets_measures
 
-def main(path_covariance_matrix: str, output_path: str):
+def main(path_covariance_matrix: str, output_path: str, repeat: int):
     
     Path(output_path).mkdir(parents=True, exist_ok=True)
 
@@ -25,9 +26,9 @@ def main(path_covariance_matrix: str, output_path: str):
     for step_size in tqdm([1, 2, 3, 4, 5], desc='step_size'):
         
         best_solution, best_energy = simulated_annealing_multi_order(
-            X, repeat=1000, max_iterations=1000,
+            X, repeat=repeat, max_iterations=2000,
             step_size=step_size,
-            device=True
+            device=torch.device('cpu'),
         )
         
         # save best solution to a numpy file
@@ -39,6 +40,7 @@ if __name__ == '__main__':
     parser = ArgumentParser('run simulated annealing multi order')
     parser.add_argument('--path_covariance_matrix', type=str, required=True)
     parser.add_argument('--output_path', type=str, required=True)
+    parser.add_argument('--repeat', type=int, default=1000)
     args = parser.parse_args()
 
-    main(args.path_covariance_matrix, args.output_path)
+    main(args.path_covariance_matrix, args.output_path, args.repeat)

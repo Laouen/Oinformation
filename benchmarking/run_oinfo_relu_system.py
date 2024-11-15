@@ -4,7 +4,7 @@ import argparse
 import torch
 
 from formulas import o_information_thoi
-from  systems import generate_relu_sistem
+from systems import generate_relu_sistem
 
 def main(output_path: str, pow_factor: float, T: int, n_repeat: int):
 

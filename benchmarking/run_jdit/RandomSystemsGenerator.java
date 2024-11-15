@@ -72,6 +72,34 @@ public class RandomSystemsGenerator {
         return result;
     };
 
+    public static float smoothSoftPlus(double X) {
+        // Compute the smooth softplus function
+        return (float)Math.log1p(Math.exp(X-3.0));
+    }
+
+    public static RandomSystem<String> generateSmoothSoftReLUSystem(double alpha, double beta, double powFactor, int T) {
+        if (!(0 <= alpha && alpha <= 1.0) || !(0 <= beta && beta <= 1.0)) {
+            throw new IllegalArgumentException("alpha and beta must be in range [0,1]");
+        }
+
+        Random random = new Random();
+        double[][] data = new double[T][4];  // 4 rows for X1, X2, Z_syn, Z_red
+
+        for (int i = 0; i < T; i++) {
+            double Z_syn = random.nextGaussian();
+            double Z_red = random.nextGaussian();
+
+            data[i][0] = alpha * Math.pow(smoothSoftPlus(Z_syn), powFactor) + beta * Z_red; // X1
+            data[i][1] = -alpha * Math.pow(smoothSoftPlus(-Z_syn), powFactor) + beta * Z_red; // X2
+            data[i][2] = Z_syn; // Z_syn
+            data[i][3] = Z_red; // Z_red
+        }
+
+        String[] columns = {"X1", "X2", "Z_syn", "Z_red"};
+        RandomSystem<String> result = new RandomSystem<String>(data, columns);
+        return result;
+    };
+
     public static RandomSystem<String> generateXORSystem(double alpha, int T) {
         if (!(0 <= alpha && alpha <= 1.0)) {
             throw new IllegalArgumentException("alpha and beta must be in range [0,1]");

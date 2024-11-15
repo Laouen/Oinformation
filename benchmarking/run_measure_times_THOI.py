@@ -42,7 +42,7 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_bs, step_bs, max_bs, mi
 
                 for order in trange(min_order, max_order+1, leave=False, desc='Order'):
 
-                    if order >= N:
+                    if order > N:
                         continue
                     
                     device = torch.device('cuda' if torch.cuda.is_available() and not use_cpu else 'cpu')

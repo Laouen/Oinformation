@@ -10,6 +10,10 @@ javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunOinfoRe
 java -cp .:infodynamics.jar RunOinfoReLUSystem ../results/o_info/system-relu_pow-0.5_repeat-20_t-10000_JDIT.tsv 0.5
 java -cp .:infodynamics.jar RunOinfoReLUSystem ../results/o_info/system-relu_pow-1.0_repeat-20_t-10000_JDIT.tsv 1.0
 
+## RunOinfoSmoothSoftReLUSytem
+javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunOinfoSmoothSoftReLUSystem.java
+java -cp .:infodynamics.jar RunOinfoSmoothSoftReLUSystem ../results/o_info/system-smoothSoftRelu_pow-0.5_repeat-20_t-10000_JDIT.tsv 0.5
+
 ## RunOinfoXORSytem
 javac -cp infodynamics.jar RandomSystemsGenerator.java TSVWriter.java RunOinfoXORSystem.java
 java -cp .:infodynamics.jar RunOinfoXORSystem ../results/o_info/system-xor_repeat-20_t-10000_JDIT.tsv

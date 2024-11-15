@@ -6,6 +6,7 @@ from glob import glob
 from argparse import ArgumentParser
 from thoi.commons import gaussian_copula
 from tqdm import tqdm
+import torch
 
 from thoi.measures.gaussian_copula import nplets_measures
 
@@ -30,7 +31,7 @@ def main(files_dir: str, output_path: str):
             gc_time = time.time() - start_time
     
             start_time = time.time()
-            nplets_measures(X, nplet, device=True)
+            nplets_measures(X, nplet, device=torch.device('cpu'))
             nplets_time = time.time() - start_time
 
             rows.append([T, i, gc_time, nplets_time])

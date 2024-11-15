@@ -189,4 +189,4 @@ def o_information_dirichlet(alpha):
 
 
 def o_information_thoi(X:np.ndarray):
-    return nplets_measures(X)[0][2]
+    return nplets_measures(X)[0][0][2]
