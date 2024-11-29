@@ -35,24 +35,25 @@ def main(min_T, step_T, max_T, min_N, step_N, max_N, min_order, max_order, metho
                 try:
                     start = time.time()
                     h = hoi.metrics.Oinfo(X)
-                    mem_usage = memory_usage((h.fit, (order, order), {'method': method}), interval=0.1)
+                    #mem_usage = memory_usage((h.fit, (order, order), {'method': method}), interval=0.1)
                     h.fit(order, order, method=method)
                     delta_t = time.time() - start
-                    max_mem = max(mem_usage)
+                    #max_mem = max(mem_usage)
                 except MemoryError as me:
                     # Handle MemoryError
                     delta_t = -1
-                    max_mem = -1
+                    #max_mem = -1
                 except Exception as e:
                     # Handle other exceptions
                     delta_t = -1
-                    max_mem = -1
+                    #max_mem = -1
 
-                rows.append(['HOI', method.upper(), T, N, order, delta_t, max_mem])
+                #rows.append(['HOI', method.upper(), T, N, order, delta_t, max_mem])
+                rows.append(['HOI', method.upper(), T, N, order, delta_t])
 
                 pd.DataFrame(
                     rows,
-                    columns=['library', 'estimator', 'T', 'N', 'order', 'time', 'max_memory_usage']
+                    columns=['library', 'estimator', 'T', 'N', 'order', 'time']
                 ).to_csv(output_path, sep='\t', index=False)
 
 
