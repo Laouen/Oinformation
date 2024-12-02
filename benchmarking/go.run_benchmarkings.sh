@@ -136,7 +136,8 @@ python run_oino_time_by_sample_size_HOI.py \
     --files_dir /home/laouen.belloli/Documents/data/Oinfo/random_sample_sizes \
     --output_path /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/times/by_sample_size_library-hoi.tsv 
 
-python run_oino_time_by_sample_size_HOT_toolbox.py \
+
+python run_oino_time_by_sample_size_HOI_toolbox.py \
     --files_dir /home/laouen.belloli/Documents/data/Oinfo/random_sample_sizes \
     --output_path /home/laouen.belloli/Documents/git/Oinformation/benchmarking/results/times/by_sample_size_library-hoitoolbox.tsv 
 

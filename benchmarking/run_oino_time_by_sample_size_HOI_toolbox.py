@@ -19,7 +19,7 @@ def main(files_dir: str, output_path: str):
     files = glob(os.path.join(files_dir, f"nsamples-*_nvars-10.csv"))
 
     config = {
-        "higher_order": True,
+        "higher_order": False,
         "estimator": 'gcmi',
         "n_best": 10, 
         "nboot": 10,
@@ -31,7 +31,8 @@ def main(files_dir: str, output_path: str):
     pbar = tqdm(files)
     for file in pbar:
         X = pd.read_csv(file, header=None).values
-        T, N = X.shape
+        X = X.T
+        N, T = X.shape
         pbar.set_description(f"T={T}:")
 
         for i in range(100):
@@ -42,7 +43,7 @@ def main(files_dir: str, output_path: str):
 
             rows.append([T, i, delta_t])
     
-    pd.DataFrame(rows, columns=['sample size', 'iteration', 'time']).to_csv(output_path, index=False)
+    pd.DataFrame(rows, columns=['sample size', 'iteration', 'time']).to_csv(output_path, sep='\t', index=False)
 
 if __name__ == "__main__":
     parser = ArgumentParser()

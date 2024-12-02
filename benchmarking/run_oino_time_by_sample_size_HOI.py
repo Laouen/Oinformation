@@ -31,7 +31,7 @@ def main(files_dir: str, output_path: str):
 
             rows.append([T, i, delta_t])
     
-    pd.DataFrame(rows, columns=['sample size', 'iteration', 'time']).to_csv(output_path, index=False)
+        pd.DataFrame(rows, columns=['sample size', 'iteration', 'time']).to_csv(output_path, sep='\t', index=False)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
