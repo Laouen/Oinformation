@@ -9609,9 +9609,9 @@
      inkscape:window-height="1129"
      id="namedview1001"
      showgrid="false"
-     inkscape:zoom="1.1958134"
-     inkscape:cx="424.57489"
-     inkscape:cy="365.66156"
+     inkscape:zoom="1.28"
+     inkscape:cx="362.07489"
+     inkscape:cy="495.06163"
      inkscape:window-x="0"
      inkscape:window-y="40"
      inkscape:window-maximized="1"
@@ -14035,9 +14035,7 @@
              id="tspan9874"
              style="font-style:italic;font-size:11.86583042px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"><tspan
                style="font-size:20.97267342px;stroke-linecap:butt;stroke-linejoin:round"
-               id="tspan8307">C</tspan><tspan
-               style="font-size:10.48633671px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"
-               id="tspan4760" /></tspan></text>
+               id="tspan8307">Σ</tspan></tspan></text>
         <text
            id="text9880"
            y="-422.85049"
@@ -18078,38 +18076,34 @@
              inkscape:connector-curvature="0" />
         </g>
       </g>
-      <g
-         transform="matrix(0.90524124,0,0,0.90524124,335.1563,-45.508919)"
-         aria-label="Covariance Matrix C"
-         style="font-style:normal;font-weight:normal;font-size:7.42281818px;line-height:1;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
-         id="text2870">
-        <text
-           id="text5837"
-           y="99.983635"
-           x="137.06505"
-           style="font-style:normal;font-weight:normal;font-size:10.66666698px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round"
-           xml:space="preserve"><tspan
-             style="font-size:22.09355736px;line-height:1;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round"
-             y="99.983635"
-             x="140.57649"
-             id="tspan5835"
-             sodipodi:role="line">Covariance </tspan><tspan
-             id="tspan5844"
-             style="font-size:22.09355736px;line-height:1;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round"
-             y="122.07719"
-             x="137.06505"
-             sodipodi:role="line">matrices <tspan
-   id="tspan5839"
-   style="font-style:italic;font-size:22.09355736px;line-height:1;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round">c<tspan
-   id="tspan8305"
-   style="font-size:11.78323078px;stroke-linecap:butt;stroke-linejoin:round" /></tspan></tspan></text>
-      </g>
       <path
          sodipodi:nodetypes="cccccccc"
          inkscape:connector-curvature="0"
          id="path1851-4"
          d="m 446.04009,154.01995 h 5.3643 v -8.04891 h 10.72876 v 8.04891 h 5.36446 L 456.76885,169.436 Z"
          style="fill:#5f9ea0;fill-opacity:1;stroke:#000000;stroke-width:0.25;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+      <g
+         transform="matrix(0.90524124,0,0,0.90524124,350.63295,-41.522041)"
+         aria-label="Covariance Matrix C"
+         style="font-style:normal;font-weight:normal;font-size:7.42281818px;line-height:1;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+         id="text2870">
+        <text
+           id="text5837"
+           y="99.983635"
+           x="81.831108"
+           style="font-style:normal;font-weight:normal;font-size:10.66666698px;line-height:1;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round"
+           xml:space="preserve"><tspan
+             id="tspan5844"
+             style="font-size:16.20194244px;line-height:1;text-align:start;text-anchor:start;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round"
+             y="99.983635"
+             x="81.831108"
+             sodipodi:role="line">Σ = Set of covariance</tspan><tspan
+             style="font-size:16.20194244px;line-height:1;text-align:start;text-anchor:start;stroke-width:0.27616948;stroke-linecap:butt;stroke-linejoin:round"
+             y="116.18558"
+             x="81.831108"
+             sodipodi:role="line"
+             id="tspan5646">matrices</tspan></text>
+      </g>
     </g>
   </g>
   <path
@@ -19663,9 +19657,9 @@
              id="tspan8616"
              y="-240.97699"
              x="707.72882"
-             sodipodi:role="line">Det(<tspan
+             sodipodi:role="line">Det(Σ<tspan
    id="tspan8614"
-   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round">C </tspan>)</tspan></text>
+   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"> </tspan>)</tspan></text>
         <text
            transform="rotate(90)"
            xml:space="preserve"
@@ -19706,9 +19700,9 @@
              id="tspan8666"
              y="-240.97699"
              x="707.72882"
-             sodipodi:role="line">Det(<tspan
+             sodipodi:role="line">Det(Σ<tspan
    id="tspan8664"
-   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round">C </tspan>)</tspan></text>
+   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"> </tspan>)</tspan></text>
         <text
            transform="rotate(90)"
            xml:space="preserve"
@@ -19737,9 +19731,9 @@
              x="719.52594"
              y="-240.97699"
              id="tspan12561"
-             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"><tspan
-               style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"
-               id="tspan12559">C</tspan></tspan></text>
+             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">Σ<tspan
+   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"
+   id="tspan12559" /></tspan></text>
         <text
            id="text12567"
            y="-251.59514"
@@ -19780,9 +19774,9 @@
              x="707.72882"
              y="-240.97699"
              id="tspan12577"
-             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">Det(<tspan
+             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">Det(Σ<tspan
    style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan12575">C </tspan>)</tspan></text>
+   id="tspan12575"> </tspan>)</tspan></text>
         <text
            id="text12583"
            y="-251.59514"
@@ -19823,9 +19817,9 @@
              x="716.49036"
              y="-240.52859"
              id="tspan12593"
-             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">H(<tspan
+             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">H(Σ<tspan
    style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan12591">C </tspan>)</tspan></text>
+   id="tspan12591"> </tspan>)</tspan></text>
         <text
            id="text12599"
            y="-251.59514"
@@ -19866,9 +19860,9 @@
              id="tspan12609"
              y="-240.52859"
              x="716.49036"
-             sodipodi:role="line">H(<tspan
+             sodipodi:role="line">H(Σ<tspan
    id="tspan12607"
-   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round">C </tspan>)</tspan></text>
+   style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"> </tspan>)</tspan></text>
         <text
            transform="rotate(90)"
            xml:space="preserve"
@@ -19909,9 +19903,9 @@
              x="716.49036"
              y="-240.52859"
              id="tspan12625"
-             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">H(<tspan
+             style="font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none">H(Σ<tspan
    style="font-style:italic;font-size:18.35108757px;stroke-width:0.24577351;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan12623">C </tspan>)</tspan></text>
+   id="tspan12623"> </tspan>)</tspan></text>
         <text
            id="text12631"
            y="-251.59514"
@@ -19945,15 +19939,7 @@
              y="628.57385"
              x="136.88429"
              sodipodi:role="line"
-             id="tspan2825">DTC(<tspan
-   style="font-style:italic;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan10525">C</tspan> ), TC(<tspan
-   style="font-style:italic;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan10527">C</tspan> ), Ω(<tspan
-   style="font-style:italic;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan10529">C</tspan> ), S(<tspan
-   style="font-style:italic;stroke-linecap:butt;stroke-linejoin:round"
-   id="tspan10531">C</tspan> )</tspan></text>
+             id="tspan2825">DTC(Σ ), TC(Σ ), Ω(Σ ), S(Σ )</tspan></text>
         <text
            id="text10499"
            y="619.37842"
@@ -20006,13 +19992,13 @@
        id="g26533">
       <text
          style="font-size:16.29434204px;font-family:Arial;text-anchor:middle;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round"
-         x="135.68425"
-         y="27.51432"
+         x="157.68425"
+         y="25.51432"
          font-size="18"
          id="text4640">
         <tspan
            id="tspan4737"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.48386002px;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round">X = Multivariate data</tspan>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.48386002px;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round">X = Set of multivariate data</tspan>
       </text>
       <g
          style="stroke-linecap:butt;stroke-linejoin:round"
